@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nest_mobile/calendar.dart';
 
 void main() {
   runApp(MyApp());
@@ -144,7 +145,7 @@ class _NhapMaScreenState extends State<NhapMaScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            SizedBox(height: 120),
+            SizedBox(height: 20),
             Text(
               'Bạn muốn tham gia Gia đình?\nNhập mã lời mời của bạn',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -196,7 +197,7 @@ class _NhapMaScreenState extends State<NhapMaScreen> {
                 ),
               ),
             ),
-            SizedBox(height: 250),
+            SizedBox(height: 100),
             Text(
               'HOẶC',
               style: TextStyle(
@@ -254,7 +255,7 @@ class _TaoNhomScreenState extends State<TaoNhomScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            SizedBox(height: 100),
+            SizedBox(height: 20),
             Text('Đặt tên Gia đình của bạn',
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
             TextField(
@@ -292,7 +293,7 @@ class _TaoNhomScreenState extends State<TaoNhomScreen> {
                 buildRoleButton('Khác'),
               ],
             ),
-            SizedBox(height: 70),
+            SizedBox(height: 10),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -301,7 +302,7 @@ class _TaoNhomScreenState extends State<TaoNhomScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => TaoNhomScreen()),
+                        builder: (context) => CalendarPage()),
                   );
                 }
                     : null, // Nếu chưa chọn vai trò, disable button

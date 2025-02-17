@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart'; // Dùng để định dạng ngày giờ
+import 'package:intl/intl.dart';
+import 'package:nest_mobile/explore.dart';
+import 'package:nest_mobile/message.dart'; // Dùng để định dạng ngày giờ
 
 class CreateSchedulePage extends StatefulWidget {
   @override
@@ -125,7 +127,11 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
                 onPressed: () {
-                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => MessageScreen()),
+                  );
                 },
                 child: const Text('Nhắn tin', style: TextStyle(color: Colors.white, fontSize: 16)),
               ),
@@ -142,7 +148,11 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
                 onPressed: () {
-                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => ExplorePage()),
+                  );
                 },
                 child: const Text('Khám phá', style: TextStyle(color: Colors.white, fontSize: 16)),
               ),
