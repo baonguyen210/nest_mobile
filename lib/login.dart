@@ -32,7 +32,7 @@ class _AuthScreenState extends State<AuthScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             SizedBox(height: 20),
-            Image.asset('assets/images/AE.png', height: 250, width: 230, fit: BoxFit.contain),
+            Image.asset('assets/images/AE.png', height: 200, width: 200, fit: BoxFit.contain),
             SizedBox(height: 0),
             Text('MXH DÀNH CHO GIA ĐÌNH', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             SizedBox(height: 10),

@@ -26,17 +26,17 @@ class ThamGiaGiaDinh extends StatelessWidget {
           children: [
             // Image.asset('assets/images/AE.png', height: 100),
             // SizedBox(height: 20),
-            SizedBox(height: 120),
+            SizedBox(height: 40),
             Text(
                 'Xin chào! Bây giờ, bạn có thể tham gia hoặc tạo gia đình của bạn',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center),
             SizedBox(height: 20),
-            Image.asset('assets/images/s.png', height: 350),
+            Image.asset('assets/images/s.png', height: 320),
             // SizedBox(height: 0),
             Text('Lưu giữ kỷ niệm cùng nhau!',
                 style: TextStyle(color: Colors.red)),
-            SizedBox(height: 120),
+            SizedBox(height: 50),
             Text('Gia đình bạn chỉ được tiếp cận với nhau qua mã.',
                 textAlign: TextAlign.center),
             SizedBox(height: 20),
@@ -197,7 +197,7 @@ class _NhapMaScreenState extends State<NhapMaScreen> {
                 ),
               ),
             ),
-            SizedBox(height: 100),
+            SizedBox(height: 180),
             Text(
               'HOẶC',
               style: TextStyle(
@@ -261,7 +261,7 @@ class _TaoNhomScreenState extends State<TaoNhomScreen> {
             TextField(
               controller: _controller,
               onChanged: (value) {
-                setState(() {});
+                setState(() {}); // Cập nhật trạng thái khi nhập tên
               },
               decoration: InputDecoration(
                 hintText: '|',
@@ -275,7 +275,6 @@ class _TaoNhomScreenState extends State<TaoNhomScreen> {
               ),
               textAlign: TextAlign.center,
             ),
-
             SizedBox(height: 10),
             Text('Bạn có thể thay đổi tên Gia đình trong cài đặt.',
                 textAlign: TextAlign.center, style: TextStyle(fontSize: 13)),
@@ -297,7 +296,8 @@ class _TaoNhomScreenState extends State<TaoNhomScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: selectedRole != null // Chỉ cho phép tiếp tục khi đã chọn vai trò
+                onPressed: _controller.text.isNotEmpty &&
+                    selectedRole != null
                     ? () {
                   Navigator.push(
                     context,
@@ -305,10 +305,12 @@ class _TaoNhomScreenState extends State<TaoNhomScreen> {
                         builder: (context) => CalendarPage()),
                   );
                 }
-                    : null, // Nếu chưa chọn vai trò, disable button
+                    : null, // Nếu chưa nhập tên gia đình hoặc chưa chọn vai trò, disable button
                 style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                  selectedRole != null ? Colors.blue : Colors.grey[300],
+                  backgroundColor: _controller.text.isNotEmpty &&
+                      selectedRole != null
+                      ? Colors.blue
+                      : Colors.grey[300],
                   padding: EdgeInsets.symmetric(vertical: 15),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8)),
@@ -316,7 +318,10 @@ class _TaoNhomScreenState extends State<TaoNhomScreen> {
                 child: Text(
                   'Tiếp tục',
                   style: TextStyle(
-                      color: selectedRole != null ? Colors.white : Colors.grey,
+                      color: _controller.text.isNotEmpty &&
+                          selectedRole != null
+                          ? Colors.white
+                          : Colors.grey,
                       fontSize: 16),
                 ),
               ),
@@ -327,25 +332,26 @@ class _TaoNhomScreenState extends State<TaoNhomScreen> {
     );
   }
 
-  Widget buildRoleButton(String text) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5.0),
-      child: ElevatedButton(
-        onPressed: () {
-          setState(() {
-            selectedRole = text; // Cập nhật vai trò đã chọn
-          });
-        },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: selectedRole == text ? Colors.blue : Colors.grey[300],
-          minimumSize: Size(double.infinity, 50),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+  Widget buildRoleButton(String role) {
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          selectedRole = role;
+        });
+      },
+      child: Container(
+        margin: EdgeInsets.symmetric(vertical: 5),
+        padding: EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: selectedRole == role ? Colors.blue : Colors.grey[200],
+          borderRadius: BorderRadius.circular(8),
         ),
+        width: double.infinity,
         child: Text(
-          text,
+          role,
+          textAlign: TextAlign.center,
           style: TextStyle(
-            color: selectedRole == text ? Colors.white : Colors.black,
-          ),
+              color: selectedRole == role ? Colors.white : Colors.black),
         ),
       ),
     );
