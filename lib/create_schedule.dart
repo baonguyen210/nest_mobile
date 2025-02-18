@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:nest_mobile/explore.dart';
-import 'package:nest_mobile/message.dart'; // Dùng để định dạng ngày giờ
+import 'package:nest_mobile/message.dart';
+import 'package:nest_mobile/setting.dart'; // Dùng để định dạng ngày giờ
 
 class CreateSchedulePage extends StatefulWidget {
   @override
@@ -98,7 +99,7 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
               ],
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 10),
 
             // Nút lưu
             SizedBox(
@@ -123,7 +124,7 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.purple,
-                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  padding: const EdgeInsets.symmetric(vertical: 5),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
                 onPressed: () {
@@ -136,7 +137,7 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
                 child: const Text('Nhắn tin', style: TextStyle(color: Colors.white, fontSize: 16)),
               ),
             ),
-            SizedBox(height: 10),
+            SizedBox(height: 2),
 
             // Nút lưu
             SizedBox(
@@ -144,7 +145,7 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.purple,
-                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  padding: const EdgeInsets.symmetric(vertical: 5),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
                 onPressed: () {
@@ -155,6 +156,26 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
                   );
                 },
                 child: const Text('Khám phá', style: TextStyle(color: Colors.white, fontSize: 16)),
+              ),
+            ),
+
+            // Nút lưu
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.purple,
+                  padding: const EdgeInsets.symmetric(vertical: 5),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => SettingScreen()),
+                  );
+                },
+                child: const Text('Cài đặt', style: TextStyle(color: Colors.white, fontSize: 16)),
               ),
             ),
           ],
