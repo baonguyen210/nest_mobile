@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:nest_mobile/homepage.dart';
 import 'package:nest_mobile/joinfamily.dart';
+import 'package:nest_mobile/services/auth_services.dart';
 
 void main() {
   runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -20,9 +23,12 @@ class AuthScreen extends StatefulWidget {
   _AuthScreenState createState() => _AuthScreenState();
 }
 
+
+
 class _AuthScreenState extends State<AuthScreen> {
   bool isLogin = true;
-
+  String email = "";
+  String password = "";
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -56,9 +62,12 @@ class _AuthScreenState extends State<AuthScreen> {
                           overlayColor: MaterialStateProperty.all(Colors.transparent),
                         ),
                         onPressed: () {
-                          setState(() {
-                            isLogin = true;
-                          });
+                          print(email);
+                          try {
+                            // final response = AuthService().login(, password)
+                          } catch (e) {
+                            print(e);
+                          }
                         },
                         child: Text('Đăng nhập', style: TextStyle(color: isLogin ? Colors.black : Colors.grey)),
                       ),
@@ -106,8 +115,14 @@ class _AuthScreenState extends State<AuthScreen> {
       children: [
         TextField(
           decoration: InputDecoration(labelText: 'Tài khoản/Email'),
+          onChanged: (value) =>  setState(() {
+            email = value;
+          }),
         ),
         TextField(
+          onChanged: (value) =>  setState(() {
+            password = value;
+          }),
           obscureText: true,
           decoration: InputDecoration(labelText: 'Mật khẩu', suffixIcon: Icon(Icons.visibility)),
         ),
@@ -127,11 +142,19 @@ class _AuthScreenState extends State<AuthScreen> {
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => ThamGiaGiaDinh()),
-              );
+            onPressed:  () async {
+              try {
+                final response = await AuthService().login(email, password);
+                print(response);
+                setState(() {
+                  isLogin = true;
+                });
+                Navigator.push(context, MaterialPageRoute(builder: (context) => ThamGiaGiaDinh()));
+              } catch (e) {
+              setState(() {
+                isLogin = false;
+              });
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.blue,

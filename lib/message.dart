@@ -9,6 +9,7 @@ class MessageScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Nhắn tin', style: TextStyle(fontWeight: FontWeight.bold)),
+        automaticallyImplyLeading: false,
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -52,19 +53,6 @@ class MessageScreen extends StatelessWidget {
         ],
       ),
       // Thanh điều hướng dưới cùng
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        currentIndex: 1, // Đánh dấu tab "Nhắn tin"
-        onTap: (index) {
-          // Xử lý điều hướng giữa các tab
-        },
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Bảng tin'),
-          BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'Nhắn tin'),
-          BottomNavigationBarItem(icon: Icon(Icons.explore), label: 'Khám phá'),
-          BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: 'Lịch trình'),
-        ],
-      ),
     );
   }
 

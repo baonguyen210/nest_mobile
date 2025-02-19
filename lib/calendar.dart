@@ -16,7 +16,11 @@ class _CalendarPageState extends State<CalendarPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Lịch trình')),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        title: const Text('Lịch trình',
+            style: TextStyle(fontWeight: FontWeight.bold)),
+      ),
       body: Column(
         children: [
           // Calendar Widget
@@ -36,7 +40,8 @@ class _CalendarPageState extends State<CalendarPage> {
                 _calendarFormat = format;
               });
             },
-            rowHeight: 38, // Giảm chiều cao hàng
+            rowHeight: 38,
+            // Giảm chiều cao hàng
             calendarStyle: const CalendarStyle(
               todayDecoration: BoxDecoration(
                 color: Colors.purple,
@@ -62,16 +67,20 @@ class _CalendarPageState extends State<CalendarPage> {
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.purple,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
                   ),
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => CreateSchedulePage()),
+                      MaterialPageRoute(
+                          builder: (context) => CreateSchedulePage()),
                     );
                   },
-                  child: const Text('Tạo lịch mới', style: TextStyle(color: Colors.white)),
+                  child: const Text('Tạo lịch mới',
+                      style: TextStyle(color: Colors.white)),
                 ),
               ],
             ),
@@ -80,7 +89,8 @@ class _CalendarPageState extends State<CalendarPage> {
           // Danh sách sự kiện
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 10), // Giữ danh sách gọn hơn
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              // Giữ danh sách gọn hơn
               children: [
                 _buildEventTile("07:30", "Nin học thể dục"),
                 _buildEventTile("16:00", "Mẹ và Bà đi siêu thị"),
@@ -96,14 +106,20 @@ class _CalendarPageState extends State<CalendarPage> {
 
   Widget _buildEventTile(String time, String event) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2), // Giảm khoảng cách giữa các mục
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      // Giảm khoảng cách giữa các mục
       child: SizedBox(
         height: 50, // Điều chỉnh độ cao của từng item để giảm khoảng cách
         child: ListTile(
-          dense: true, // Làm cho ListTile gọn hơn
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0), // Giảm padding
-          visualDensity: VisualDensity(horizontal: 0, vertical: -4), // Giảm khoảng cách giữa các ListTile
-          leading: const Icon(Icons.calendar_today, color: Colors.purple, size: 18),
+          dense: true,
+          // Làm cho ListTile gọn hơn
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+          // Giảm padding
+          visualDensity: VisualDensity(horizontal: 0, vertical: -4),
+          // Giảm khoảng cách giữa các ListTile
+          leading:
+              const Icon(Icons.calendar_today, color: Colors.purple, size: 18),
           title: Text(
             event,
             style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
@@ -117,5 +133,4 @@ class _CalendarPageState extends State<CalendarPage> {
       ),
     );
   }
-
 }

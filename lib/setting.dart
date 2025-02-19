@@ -8,98 +8,123 @@ class SettingScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Cài đặt', style: TextStyle(fontWeight: FontWeight.bold)),
+        automaticallyImplyLeading: false,
+        title: const Text('Hồ sơ', style: TextStyle(fontWeight: FontWeight.bold)),
       ),
-      body: Column(
-        children: [
-          // Thông tin tài khoản
-          ListTile(
-            leading: const CircleAvatar(
-              backgroundImage: AssetImage('assets/images/user_avatar.jpg'), // Avatar giả lập
-              radius: 24,
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Thông tin tài khoản
+            ListTile(
+              leading: const CircleAvatar(
+                backgroundImage: AssetImage('assets/images/user_avatar.jpg'), // Avatar giả lập
+                radius: 24,
+              ),
+              title: const Text('Con', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              subtitle: const Text('Tài khoản nhỏ', style: TextStyle(color: Colors.grey)),
+              trailing: IconButton(
+                icon: const Icon(Icons.swap_horiz),
+                onPressed: () {
+                  // Chuyển đổi tài khoản
+                },
+              ),
             ),
-            title: const Text('Con', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            subtitle: const Text('Tài khoản nhỏ', style: TextStyle(color: Colors.grey)),
-            trailing: IconButton(
-              icon: const Icon(Icons.swap_horiz), // Thay đổi biểu tượng thành "Chuyển đổi tài khoản"
-              onPressed: () {
-                // Thêm chức năng chuyển đổi tài khoản ở đây
+
+            const Divider(),
+
+            // Các tùy chọn cài đặt
+            ListTile(
+              leading: const Icon(Icons.group, color: Colors.red),
+              title: const Text('Quản lý nhóm gia đình'),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const GroupManagementScreen()),
+                );
               },
             ),
-          ),
-
-          const Divider(),
-
-          // Các tùy chọn cài đặt
-          ListTile(
-            leading: const Icon(Icons.group, color: Colors.red),
-            title: const Text('Quản lý nhóm gia đình'),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const GroupManagementScreen()),
-              );
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.settings, color: Colors.grey),
-            title: const Text('Cài đặt tài khoản'),
-            onTap: () {
-              // Chuyển đến cài đặt tài khoản
-            },
-          ),
-          const Divider(),
-
-          // Tiêu đề Premium
-          ExpansionTile(
-            title: Row(
-              children: [
-                const Text('Đăng ký ', style: TextStyle(fontSize: 16)),
-                Text('PREMIUM', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blue)),
-              ],
+            ListTile(
+              leading: const Icon(Icons.settings, color: Colors.grey),
+              title: const Text('Cài đặt tài khoản'),
+              onTap: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const GroupManagementScreen()),
+                );
+              },
             ),
-            children: [
-              // Mô phỏng khoảng trống cho hình ảnh Premium
-              Container(
-                width: double.infinity,
-                height: 300, // Giữ chỗ cho hình ảnh Premium
-                margin: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  color: Colors.grey[300], // Màu nền mô phỏng
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                alignment: Alignment.center,
-                child: const Text(
-                  'Hình ảnh gói Premium sẽ được thêm vào đây',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 14, color: Colors.grey),
-                ),
-              ),
+            ListTile(
+              leading: const Icon(Icons.logout, color: Colors.red),
+              title: const Text('Đăng xuất', style: TextStyle(color: Colors.red)),
+              onTap: () {
 
-              // Nút đăng ký
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              },
+            ),
+            const Divider(),
+
+            // Tiêu đề Premium
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+              color: Colors.white, // Đặt màu nền để nổi bật
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Text('Đăng ký ', style: TextStyle(fontSize: 16)),
+                      Text(
+                        'PREMIUM',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blue),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 15), // Khoảng cách giữa tiêu đề và hình ảnh
+
+                  // Ảnh Premium
+                  Container(
+                    width: double.infinity,
+                    height: 620,
+                    margin: const EdgeInsets.symmetric(horizontal: 0),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    onPressed: () {
-                      // Chuyển đến trang thanh toán Premium
-                    },
-                    child: const Text(
-                      'ĐĂNG KÝ',
-                      style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                    clipBehavior: Clip.hardEdge,
+                    child: Image.asset(
+                      'assets/images/premium.png',
+                      width: double.infinity,
+                      height: double.infinity,
+                      fit: BoxFit.cover,
                     ),
                   ),
-                ),
+
+                  // Nút đăng ký
+                  Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        onPressed: () {
+                          // Chuyển đến trang thanh toán Premium
+                        },
+                        child: const Text(
+                          'ĐĂNG KÝ',
+                          style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ],
+            ),
+
+          ],
+        ),
       ),
     );
   }

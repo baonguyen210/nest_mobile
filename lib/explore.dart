@@ -7,8 +7,10 @@ class ExplorePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Khám phá')),
-      bottomNavigationBar: _buildBottomNavigation(),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        title: const Text('Khám phá', style: TextStyle(fontWeight: FontWeight.bold)),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -184,17 +186,5 @@ class ExplorePage extends StatelessWidget {
   }
 
   // Thanh điều hướng dưới
-  Widget _buildBottomNavigation() {
-    return BottomNavigationBar(
-      selectedItemColor: Colors.blue,
-      unselectedItemColor: Colors.grey,
-      showUnselectedLabels: true,
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.feed), label: 'Bảng tin'),
-        BottomNavigationBarItem(icon: Icon(Icons.message), label: 'Nhắn tin'),
-        BottomNavigationBarItem(icon: Icon(Icons.explore), label: 'Khám phá'),
-        BottomNavigationBarItem(icon: Icon(Icons.event), label: 'Lịch trình'),
-      ],
-    );
-  }
+
 }
