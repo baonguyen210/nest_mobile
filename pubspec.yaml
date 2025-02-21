@@ -37,6 +37,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   table_calendar: ^3.0.9
   dio: ^4.0.0
+  shared_preferences: ^2.2.2
 
 dev_dependencies:
   flutter_test:
@@ -65,6 +66,8 @@ flutter:
     - assets/images/s.png
     - assets/images/logo.png
     - assets/images/premium.png
+    - assets/images/Facebook.png
+    - assets/images/Google.png
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg
