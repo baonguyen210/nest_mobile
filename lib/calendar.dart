@@ -1,4 +1,6 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'create_schedule.dart';
 
@@ -12,6 +14,39 @@ class CalendarPage extends StatefulWidget {
 class _CalendarPageState extends State<CalendarPage> {
   DateTime _selectedDay = DateTime.now();
   CalendarFormat _calendarFormat = CalendarFormat.month;
+  List<Map<String, dynamic>> _schedules = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchScheduler();
+  }
+
+  Future<void> _fetchScheduler() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? familyId = prefs.getString('familyId'); // Lấy familyId từ SharedPreferences
+
+      if (familyId == null) {
+        print("⚠️ Không tìm thấy familyId trong SharedPreferences");
+        return;
+      }
+
+      String url = "https://platform-family.onrender.com/scheduler/$familyId";
+      Dio dio = Dio();
+      Response response = await dio.get(url);
+
+      if (response.statusCode == 200 && response.data["ok"] == true) {
+        setState(() {
+          _schedules = List<Map<String, dynamic>>.from(response.data["data"]);
+        });
+      } else {
+        print("⚠️ Lỗi lấy lịch trình: ${response.data["message"]}");
+      }
+    } catch (e) {
+      print("❌ Lỗi kết nối API: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -87,18 +122,28 @@ class _CalendarPageState extends State<CalendarPage> {
           ),
 
           // Danh sách sự kiện
+          // Danh sách sự kiện
           Expanded(
-            child: ListView(
+            child: _schedules.isEmpty
+                ? Center(
+              child: Text(
+                "Bạn chưa có lịch trình mới nào.",
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),
+              ),
+            )
+                : ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 10),
-              // Giữ danh sách gọn hơn
-              children: [
-                _buildEventTile("07:30", "Nin học thể dục"),
-                _buildEventTile("16:00", "Mẹ và Bà đi siêu thị"),
-                _buildEventTile("19:00 - 20:00", "Sushi học thêm Toán"),
-                _buildEventTile("29/05", "Sinh nhật Ông ngoại"),
-              ],
+              itemCount: _schedules.length, // Sử dụng danh sách từ API
+              itemBuilder: (context, index) {
+                final schedule = _schedules[index]; // Lấy từng lịch trình
+                return _buildEventTile(
+                  schedule["date"].toString().substring(0, 10), // Hiển thị ngày (cắt chuỗi)
+                  schedule["title"], // Tiêu đề lịch trình
+                );
+              },
             ),
           ),
+
         ],
       ),
     );
@@ -119,16 +164,16 @@ class _CalendarPageState extends State<CalendarPage> {
           visualDensity: VisualDensity(horizontal: 0, vertical: -4),
           // Giảm khoảng cách giữa các ListTile
           leading:
-              const Icon(Icons.calendar_today, color: Colors.purple, size: 18),
+              const Icon(Icons.calendar_today, color: Colors.purple, size: 25),
           title: Text(
             event,
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           subtitle: Text(
             time,
             style: const TextStyle(color: Colors.grey, fontSize: 12),
           ),
-          trailing: const Icon(Icons.more_vert, size: 18),
+          // trailing: const Icon(Icons.more_vert, size: 20),
         ),
       ),
     );

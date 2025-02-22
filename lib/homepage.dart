@@ -1,5 +1,7 @@
+// import 'package:dio/dio.dart';
 // import 'package:flutter/material.dart';
 // import 'package:nest_mobile/setting.dart';
+// import 'package:shared_preferences/shared_preferences.dart';
 // import 'message.dart';
 // import 'explore.dart';
 // import 'calendar.dart';
@@ -76,7 +78,64 @@
 // // -----------------
 // // HomeScreen
 // // -----------------
-// class HomeScreen extends StatelessWidget {
+// class HomeScreen extends StatefulWidget {
+//   @override
+//   _HomeScreenState createState() => _HomeScreenState();
+// }
+//
+// class _HomeScreenState extends State<HomeScreen> {
+//   List<Map<String, dynamic>> _posts = [];
+//   String _userName = "Người dùng";
+//   String _avatarUrl = "assets/images/user_avatar.jpg"; // Ảnh mặc định nếu không có avatar
+//
+//   @override
+//   void initState() {
+//     super.initState();
+//     _fetchFamilyPosts();
+//     _loadUserInfo();
+//   }
+//
+//   /// **Lấy name & avatar từ SharedPreferences**
+//   Future<void> _loadUserInfo() async {
+//     final prefs = await SharedPreferences.getInstance();
+//     setState(() {
+//       _userName = prefs.getString('name') ?? "Người dùng";
+//       _avatarUrl = prefs.getString('avatar') ?? "assets/images/user_avatar.jpg";
+//     });
+//   }
+//
+//   /// **Gọi API lấy bài viết**
+//   Future<void> _fetchFamilyPosts() async {
+//     try {
+//       SharedPreferences prefs = await SharedPreferences.getInstance();
+//       String? familyId = prefs.getString('familyId');
+//
+//       if (familyId == null || familyId.isEmpty) {
+//         print("⚠️ Không tìm thấy familyId trong SharedPreferences");
+//         return;
+//       }
+//
+//       String url = "https://platform-family.onrender.com/post/posts-family?familyId=$familyId";
+//       Dio dio = Dio();
+//       Response response = await dio.get(url);
+//
+//       if (response.statusCode == 200 && response.data["ok"] == true) {
+//         if (response.data["data"] is List) {
+//           setState(() {
+//             _posts = List<Map<String, dynamic>>.from(response.data["data"]);
+//           });
+//         } else {
+//           print("⚠️ API trả về dữ liệu không đúng định dạng");
+//         }
+//       } else {
+//         print("⚠️ Lỗi lấy bài viết: ${response.data["message"]}");
+//       }
+//     } catch (e) {
+//       print("❌ Lỗi kết nối API: $e");
+//     }
+//   }
+//
+//
 //   @override
 //   Widget build(BuildContext context) {
 //     return Column(
@@ -84,7 +143,7 @@
 //         _buildHeader(context),
 //         _buildEventNotification(),
 //         _buildTabs(),
-//         _buildShareBox(context),
+//         _buildShareBox(context), // **Cập nhật avatar người dùng vào ô chia sẻ**
 //         Expanded(child: _buildPostList()),
 //       ],
 //     );
@@ -154,6 +213,7 @@
 //   }
 //
 //   // Hộp chia sẻ bài viết
+//   /// **Ô chia sẻ bài viết với avatar của người dùng**
 //   Widget _buildShareBox(BuildContext context) {
 //     return Container(
 //       padding: EdgeInsets.all(10),
@@ -161,12 +221,14 @@
 //       child: Row(
 //         children: [
 //           CircleAvatar(
-//             backgroundImage: AssetImage('assets/images/user_avatar.png'),
+//             backgroundImage: _avatarUrl.startsWith("http")
+//                 ? NetworkImage(_avatarUrl)
+//                 : AssetImage(_avatarUrl) as ImageProvider,
 //           ),
 //           SizedBox(width: 10),
 //           Expanded(
 //             child: GestureDetector(
-//               onTap: () => _showCreatePostModal(context), // Gọi popup khi nhấn vào
+//               onTap: () => _showCreatePostModal(context, _avatarUrl, _userName), // Truyền avatar & name vào
 //               child: Container(
 //                 padding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
 //                 decoration: BoxDecoration(
@@ -182,11 +244,11 @@
 //           ),
 //           SizedBox(width: 10),
 //           Icon(Icons.image, color: Colors.green, size: 35),
-//           SizedBox(width: 2),
 //         ],
 //       ),
 //     );
 //   }
+//
 //
 //
 //   // Tabs giữa "Gia đình" và "Mọi người"
@@ -221,165 +283,232 @@
 //
 //   // Danh sách bài viết
 //   Widget _buildPostList() {
-//     return ListView(
-//       children: [
-//         _buildPost(
-//           "Ba",
-//           "Kỷ niệm cuối năm\nNhờ NEST lưu giữ kỷ niệm cả gia đình cùng đi chơi Hội An vui thật vui cùng nhau!",
-//           "Hội An, 31/12/2024",
-//           ["assets/images/photo1.jpg", "assets/images/photo2.jpg"],
-//           2,
+//     if (_posts.isEmpty) {
+//       return const Center(
+//         child: Text(
+//           "Không có bài viết nào",
+//           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),
 //         ),
-//         _buildPost(
-//           "Mẹ",
-//           "Quá nhanh quá nguy hiểm\nĐi chơi thôi!!!",
+//       );
+//     }
+//
+//     return ListView.builder(
+//       itemCount: _posts.length,
+//       itemBuilder: (context, index) {
+//         final post = _posts[index];
+//
+//         return _buildPost(
+//           post["author"] ?? "Ẩn danh",
+//           post["content"] ?? "",
 //           "",
-//           ["assets/images/photo1.jpg", "assets/images/photo2.jpg"],
-//           5,
-//         ),
-//       ],
-//     );
-//   }
-//
-//   // Một bài viết
-//   Widget _buildPost(String user, String content, String location, List<String> images, int likes) {
-//     return Container(
-//       padding: EdgeInsets.all(10),
-//       margin: EdgeInsets.only(bottom: 10),
-//       color: Colors.white,
-//       child: Column(
-//         crossAxisAlignment: CrossAxisAlignment.start,
-//         children: [
-//           Row(
-//             children: [
-//               CircleAvatar(backgroundImage: AssetImage('assets/images/user_avatar.png')),
-//               SizedBox(width: 10),
-//               Text(user, style: TextStyle(fontWeight: FontWeight.bold)),
-//               Spacer(),
-//               Text("1 giờ trước", style: TextStyle(color: Colors.grey)),
-//             ],
-//           ),
-//           SizedBox(height: 5),
-//           Text(content),
-//           if (location.isNotEmpty) Text("📍 " + location, style: TextStyle(color: Colors.grey)),
-//           SizedBox(height: 5),
-//           Row(
-//             children: images.map((img) => Expanded(child: Image.asset(img, height: 100))).toList(),
-//           ),
-//           SizedBox(height: 5),
-//           Row(
-//             children: [
-//               Icon(Icons.favorite, color: Colors.red),
-//               SizedBox(width: 5),
-//               Text("$likes"),
-//               SizedBox(width: 10),
-//               Icon(Icons.comment),
-//               Text(" Bình luận"),
-//             ],
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-//
-//   void _showCreatePostModal(BuildContext context) {
-//     showModalBottomSheet(
-//       context: context,
-//       isScrollControlled: true, // Để popup hiện full màn hình khi cần
-//       shape: RoundedRectangleBorder(
-//         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-//       ),
-//       builder: (context) {
-//         return Padding(
-//           padding: EdgeInsets.only(
-//             bottom: MediaQuery.of(context).viewInsets.bottom, // Đẩy lên khi bàn phím xuất hiện
-//           ),
-//           child: Container(
-//             padding: EdgeInsets.all(16),
-//             child: Column(
-//               mainAxisSize: MainAxisSize.min,
-//               crossAxisAlignment: CrossAxisAlignment.start,
-//               children: [
-//                 // Thanh tiêu đề
-//                 Row(
-//                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//                   children: [
-//                     Text("Tạo bài viết", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-//                     IconButton(
-//                       icon: Icon(Icons.close),
-//                       onPressed: () => Navigator.pop(context),
-//                     ),
-//                   ],
-//                 ),
-//                 Divider(),
-//
-//                 // Thông tin người đăng
-//                 Row(
-//                   children: [
-//                     CircleAvatar(
-//                       backgroundImage: AssetImage('assets/images/user_avatar.png'),
-//                     ),
-//                     SizedBox(width: 10),
-//                     Column(
-//                       crossAxisAlignment: CrossAxisAlignment.start,
-//                       children: [
-//                         Text("Thành Đạt", style: TextStyle(fontWeight: FontWeight.bold)),
-//                         Container(
-//                           padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-//                           decoration: BoxDecoration(
-//                             color: Colors.grey[300],
-//                             borderRadius: BorderRadius.circular(8),
-//                           ),
-//                           child: Row(
-//                             mainAxisSize: MainAxisSize.min,
-//                             children: [
-//                               Icon(Icons.lock, size: 14),
-//                               SizedBox(width: 5),
-//                               Text("Gia đình", style: TextStyle(fontSize: 12)),
-//                               Icon(Icons.arrow_drop_down, size: 14),
-//                             ],
-//                           ),
-//                         ),
-//                       ],
-//                     ),
-//                   ],
-//                 ),
-//
-//                 SizedBox(height: 10),
-//
-//                 // Ô nhập nội dung bài viết
-//                 TextField(
-//                   maxLines: 10,
-//                   decoration: InputDecoration(
-//                     hintText: "Đạt ơi, bạn đang nghĩ gì thế?",
-//                     border: InputBorder.none,
-//                   ),
-//                 ),
-//
-//                 SizedBox(height: 10),
-//
-//                 // Nút Đăng (disable nếu chưa nhập nội dung)
-//                 ElevatedButton(
-//                   onPressed: () {
-//                     Navigator.pop(context); // Đóng popup khi đăng bài
-//                     ScaffoldMessenger.of(context).showSnackBar(
-//                       SnackBar(content: Text("Bài viết đã được đăng!"), backgroundColor: Colors.green),
-//                     );
-//                   },
-//                   style: ElevatedButton.styleFrom(
-//                     backgroundColor: Colors.blue,
-//                     minimumSize: Size(double.infinity, 40), // Nút full width
-//                   ),
-//                   child: Text("Đăng", style: TextStyle(color: Colors.white)),
-//                 ),
-//               ],
-//             ),
-//           ),
+//           post["images"] != null ? List<String>.from(post["images"]) : [],
+//           0, // API chưa trả về số lượng like
 //         );
 //       },
 //     );
 //   }
 // }
+//
+// // Một bài viết
+// Widget _buildPost(String user, String content, String location, List<String> images, int likes) {
+//   return Container(
+//     padding: EdgeInsets.all(10),
+//     margin: EdgeInsets.only(bottom: 10),
+//     color: Colors.white,
+//     child: Column(
+//       crossAxisAlignment: CrossAxisAlignment.start,
+//       children: [
+//         Row(
+//           children: [
+//             CircleAvatar(backgroundImage: AssetImage('assets/images/Facebook.png')),
+//             SizedBox(width: 10),
+//             Text(user, style: TextStyle(fontWeight: FontWeight.bold)),
+//             Spacer(),
+//             Text("1 giờ trước", style: TextStyle(color: Colors.grey)),
+//           ],
+//         ),
+//         SizedBox(height: 5),
+//         Text(content),
+//         if (location.isNotEmpty) Text("📍 " + location, style: TextStyle(color: Colors.grey)),
+//         SizedBox(height: 5),
+//         Row(
+//           children: images.map((img) => Expanded(child: Image.asset(img, height: 100))).toList(),
+//         ),
+//         SizedBox(height: 5),
+//         Row(
+//           children: [
+//             Icon(Icons.favorite, color: Colors.red),
+//             SizedBox(width: 5),
+//             Text("$likes"),
+//             SizedBox(width: 10),
+//             Icon(Icons.comment),
+//             Text(" Bình luận"),
+//           ],
+//         ),
+//       ],
+//     ),
+//   );
+// }
+//
+// void _showCreatePostModal(BuildContext context, String avatarUrl, String userName) {
+//   TextEditingController _postController = TextEditingController();
+//
+//   showModalBottomSheet(
+//     context: context,
+//     isScrollControlled: true,
+//     shape: RoundedRectangleBorder(
+//       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+//     ),
+//     builder: (context) {
+//       return Padding(
+//         padding: EdgeInsets.only(
+//           bottom: MediaQuery.of(context).viewInsets.bottom,
+//         ),
+//         child: Container(
+//           padding: EdgeInsets.all(16),
+//           child: Column(
+//             mainAxisSize: MainAxisSize.min,
+//             crossAxisAlignment: CrossAxisAlignment.start,
+//             children: [
+//               Row(
+//                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//                 children: [
+//                   Text("Tạo bài viết", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+//                   IconButton(
+//                     icon: Icon(Icons.close),
+//                     onPressed: () => Navigator.pop(context),
+//                   ),
+//                 ],
+//               ),
+//               Divider(),
+//
+//               // Hiển thị thông tin user
+//               Row(
+//                 children: [
+//                   CircleAvatar(
+//                     backgroundImage: avatarUrl.startsWith("http")
+//                         ? NetworkImage(avatarUrl)
+//                         : AssetImage(avatarUrl) as ImageProvider,
+//                   ),
+//                   SizedBox(width: 10),
+//                   Column(
+//                     crossAxisAlignment: CrossAxisAlignment.start,
+//                     children: [
+//                       Text(userName, style: TextStyle(fontWeight: FontWeight.bold)),
+//                       Container(
+//                         padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+//                         decoration: BoxDecoration(
+//                           color: Colors.grey[300],
+//                           borderRadius: BorderRadius.circular(8),
+//                         ),
+//                         child: Row(
+//                           mainAxisSize: MainAxisSize.min,
+//                           children: [
+//                             Icon(Icons.lock, size: 14),
+//                             SizedBox(width: 5),
+//                             Text("Gia đình", style: TextStyle(fontSize: 12)),
+//                             Icon(Icons.arrow_drop_down, size: 14),
+//                           ],
+//                         ),
+//                       ),
+//                     ],
+//                   ),
+//                 ],
+//               ),
+//
+//               SizedBox(height: 10),
+//
+//               TextField(
+//                 controller: _postController,
+//                 maxLines: 4,
+//                 decoration: InputDecoration(
+//                   hintText: "Bạn đang nghĩ gì, $userName?",
+//                   border: InputBorder.none,
+//                 ),
+//               ),
+//
+//               SizedBox(height: 10),
+//
+//               ElevatedButton(
+//                 onPressed: () async {
+//                   await _createPost(_postController.text, context);
+//                 },
+//                 style: ElevatedButton.styleFrom(
+//                   backgroundColor: Colors.blue,
+//                   minimumSize: Size(double.infinity, 40),
+//                 ),
+//                 child: Text("Đăng", style: TextStyle(color: Colors.white)),
+//               ),
+//             ],
+//           ),
+//         ),
+//       );
+//     },
+//   );
+// }
+//
+// Future<void> _createPost(String content, BuildContext context) async {
+//   if (content.isEmpty) {
+//     ScaffoldMessenger.of(context).showSnackBar(
+//       SnackBar(content: Text("Vui lòng nhập nội dung bài viết"), backgroundColor: Colors.red),
+//     );
+//     return;
+//   }
+//
+//   try {
+//     final prefs = await SharedPreferences.getInstance();
+//     final String? author = prefs.getString('userId');
+//     final String? familyId = prefs.getString('familyId');
+//
+//     if (author == null || familyId == null || familyId.isEmpty) {
+//       print("❌ Lỗi: Không tìm thấy thông tin userId hoặc familyId!");
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         SnackBar(content: Text("Lỗi: Không tìm thấy thông tin người dùng"), backgroundColor: Colors.red),
+//       );
+//       return;
+//     }
+//
+//     final dio = Dio();
+//     print("🚀 Gửi request tạo bài viết...");
+//
+//     final response = await dio.post(
+//       'https://platform-family.onrender.com/post/create',
+//       data: {
+//         "author": author,
+//         "familyId": familyId,
+//         "content": content,
+//       },
+//       options: Options(headers: {'Content-Type': 'application/json'}),
+//     );
+//
+//     print("📩 API Response Status Code: ${response.statusCode}");
+//     print("📩 API Response Data: ${response.data}");
+//
+//     if (response.statusCode == 200 && response.data["statusCode"] == 201) {
+//       print("✅ Bài viết đã được tạo thành công!");
+//
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         SnackBar(content: Text("Bài viết đã được đăng!"), backgroundColor: Colors.green),
+//       );
+//
+//       Navigator.pop(context);
+//     } else {
+//       print("❌ Lỗi đăng bài: ${response.data["message"] ?? "Không có thông báo lỗi"}");
+//
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         SnackBar(content: Text("Lỗi đăng bài: ${response.data["message"] ?? "Không có thông báo lỗi"}"), backgroundColor: Colors.red),
+//       );
+//     }
+//   } catch (e) {
+//     print("🚨 Lỗi kết nối API: $e");
+//
+//     ScaffoldMessenger.of(context).showSnackBar(
+//       SnackBar(content: Text("Lỗi kết nối: $e"), backgroundColor: Colors.red),
+//     );
+//   }
+// }
+//
+//
 
 
 import 'package:dio/dio.dart';
@@ -462,7 +591,66 @@ class _HomepageState extends State<Homepage> {
 // -----------------
 // HomeScreen
 // -----------------
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
+  @override
+  _HomeScreenState createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  List<Map<String, dynamic>> _posts = [];
+  Map<String, Map<String, String>> _familyMembers = {}; // Lưu ID -> name, avatar
+  String _userName = "Người dùng";
+  String _avatarUrl = "assets/images/user_avatar.jpg";
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchFamilyData();
+    _loadUserInfo();
+  }
+
+  /// **Lấy name & avatar từ SharedPreferences**
+  Future<void> _loadUserInfo() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _userName = prefs.getString('name') ?? "Người dùng";
+      _avatarUrl = prefs.getString('avatar') ?? "assets/images/user_avatar.jpg";
+    });
+  }
+
+
+  /// **Gọi API lấy bài viết**
+  Future<void> _fetchFamilyPosts() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? familyId = prefs.getString('familyId');
+
+      if (familyId == null || familyId.isEmpty) {
+        print("⚠️ Không tìm thấy familyId trong SharedPreferences");
+        return;
+      }
+
+      String url = "https://platform-family.onrender.com/post/posts-family?familyId=$familyId";
+      Dio dio = Dio();
+      Response response = await dio.get(url);
+
+      if (response.statusCode == 200 && response.data["ok"] == true) {
+        if (response.data["data"] is List) {
+          setState(() {
+            _posts = List<Map<String, dynamic>>.from(response.data["data"]);
+          });
+        } else {
+          print("⚠️ API trả về dữ liệu không đúng định dạng");
+        }
+      } else {
+        print("⚠️ Lỗi lấy bài viết: ${response.data["message"]}");
+      }
+    } catch (e) {
+      print("❌ Lỗi kết nối API: $e");
+    }
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -540,6 +728,7 @@ class HomeScreen extends StatelessWidget {
   }
 
   // Hộp chia sẻ bài viết
+  /// **Ô chia sẻ bài viết với avatar của người dùng**
   Widget _buildShareBox(BuildContext context) {
     return Container(
       padding: EdgeInsets.all(10),
@@ -547,12 +736,14 @@ class HomeScreen extends StatelessWidget {
       child: Row(
         children: [
           CircleAvatar(
-            backgroundImage: AssetImage('assets/images/Facebook.png'),
+            backgroundImage: _avatarUrl.startsWith("http")
+                ? NetworkImage(_avatarUrl)
+                : AssetImage(_avatarUrl) as ImageProvider,
           ),
           SizedBox(width: 10),
           Expanded(
             child: GestureDetector(
-              onTap: () => _showCreatePostModal(context), // Gọi popup khi nhấn vào
+              onTap: () => _showCreatePostModal(context, _avatarUrl, _userName), // Truyền avatar & name vào
               child: Container(
                 padding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                 decoration: BoxDecoration(
@@ -568,11 +759,11 @@ class HomeScreen extends StatelessWidget {
           ),
           SizedBox(width: 10),
           Icon(Icons.image, color: Colors.green, size: 35),
-          SizedBox(width: 2),
         ],
       ),
     );
   }
+
 
 
   // Tabs giữa "Gia đình" và "Mọi người"
@@ -605,236 +796,294 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
+  /// **Gọi API lấy danh sách thành viên & bài viết**
+  Future<void> _fetchFamilyData() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? familyId = prefs.getString('familyId');
+
+      if (familyId == null || familyId.isEmpty) {
+        print("⚠️ Không tìm thấy familyId trong SharedPreferences");
+        return;
+      }
+
+      String memberUrl = "https://platform-family.onrender.com/family/get-members/$familyId";
+      String postUrl = "https://platform-family.onrender.com/post/posts-family?familyId=$familyId";
+      Dio dio = Dio();
+
+      // Gọi API lấy danh sách thành viên
+      Response memberResponse = await dio.get(memberUrl);
+      if (memberResponse.statusCode == 200 && memberResponse.data["ok"] == true) {
+        Map<String, Map<String, String>> memberMap = {};
+
+        // Lưu thông tin admin
+        var admin = memberResponse.data["data"]["admin"];
+        memberMap[admin["_id"]] = {
+          "name": admin["name"],
+          "avatar": admin["avatar"] ?? "assets/images/user_avatar.jpg"
+        };
+
+        // Lưu thông tin các thành viên
+        List<dynamic> members = memberResponse.data["data"]["members"];
+        for (var member in members) {
+          memberMap[member["_id"]] = {
+            "name": member["name"],
+            "avatar": member["avatar"] ?? "assets/images/user_avatar.jpg"
+          };
+        }
+
+        setState(() {
+          _familyMembers = memberMap;
+        });
+      } else {
+        print("⚠️ Lỗi khi lấy danh sách thành viên: ${memberResponse.data["message"]}");
+      }
+
+      // Gọi API lấy bài viết
+      Response postResponse = await dio.get(postUrl);
+      if (postResponse.statusCode == 200 && postResponse.data["ok"] == true) {
+        if (postResponse.data["data"] is List) {
+          setState(() {
+            _posts = List<Map<String, dynamic>>.from(postResponse.data["data"]);
+          });
+        } else {
+          print("⚠️ API bài viết trả về dữ liệu không đúng định dạng");
+        }
+      } else {
+        print("⚠️ Lỗi lấy bài viết: ${postResponse.data["message"]}");
+      }
+    } catch (e) {
+      print("❌ Lỗi kết nối API: $e");
+    }
+  }
+
   // Danh sách bài viết
   Widget _buildPostList() {
-    return ListView(
-      children: [
-        _buildPost(
-          "Ba",
-          "Kỷ niệm cuối năm\nNhờ NEST lưu giữ kỷ niệm cả gia đình cùng đi chơi Hội An vui thật vui cùng nhau!",
-          "Hội An, 31/12/2024",
-          ["assets/images/photo1.jpg", "assets/images/photo2.jpg"],
-          2,
+    if (_posts.isEmpty) {
+      return const Center(
+        child: Text(
+          "Không có bài viết nào",
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),
         ),
-        _buildPost(
-          "Mẹ",
-          "Quá nhanh quá nguy hiểm\nĐi chơi thôi!!!",
-          "",
-          ["assets/images/photo1.jpg", "assets/images/photo2.jpg"],
-          5,
-        ),
-      ],
-    );
-  }
+      );
+    }
 
-  // Một bài viết
-  Widget _buildPost(String user, String content, String location, List<String> images, int likes) {
-    return Container(
-      padding: EdgeInsets.all(10),
-      margin: EdgeInsets.only(bottom: 10),
-      color: Colors.white,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              CircleAvatar(backgroundImage: AssetImage('assets/images/Facebook.png')),
-              SizedBox(width: 10),
-              Text(user, style: TextStyle(fontWeight: FontWeight.bold)),
-              Spacer(),
-              Text("1 giờ trước", style: TextStyle(color: Colors.grey)),
-            ],
-          ),
-          SizedBox(height: 5),
-          Text(content),
-          if (location.isNotEmpty) Text("📍 " + location, style: TextStyle(color: Colors.grey)),
-          SizedBox(height: 5),
-          Row(
-            children: images.map((img) => Expanded(child: Image.asset(img, height: 100))).toList(),
-          ),
-          SizedBox(height: 5),
-          Row(
-            children: [
-              Icon(Icons.favorite, color: Colors.red),
-              SizedBox(width: 5),
-              Text("$likes"),
-              SizedBox(width: 10),
-              Icon(Icons.comment),
-              Text(" Bình luận"),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+    return ListView.builder(
+      itemCount: _posts.length,
+      itemBuilder: (context, index) {
+        final post = _posts[index];
+        String authorId = post["author"] ?? "unknown";
+        String authorName = _familyMembers[authorId]?["name"] ?? "Ẩn danh";
+        String authorAvatar = _familyMembers[authorId]?["avatar"] ?? "assets/images/user_avatar.jpg";
 
-  void _showCreatePostModal(BuildContext context) {
-    TextEditingController _postController = TextEditingController();
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true, // Hiển thị full màn hình nếu cần
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom, // Đẩy lên khi bàn phím xuất hiện
-          ),
-          child: Container(
-            padding: EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Thanh tiêu đề
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text("Tạo bài viết", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    IconButton(
-                      icon: Icon(Icons.close),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
-                ),
-                Divider(),
-
-                // Thông tin người đăng
-                Row(
-                  children: [
-                    CircleAvatar(
-                      backgroundImage: AssetImage('assets/images/Facebook.png'),
-                    ),
-                    SizedBox(width: 10),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text("Thành Đạt", style: TextStyle(fontWeight: FontWeight.bold)),
-                        Container(
-                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[300],
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.lock, size: 14),
-                              SizedBox(width: 5),
-                              Text("Gia đình", style: TextStyle(fontSize: 12)),
-                              Icon(Icons.arrow_drop_down, size: 14),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-
-                SizedBox(height: 10),
-
-                // Ô nhập nội dung bài viết
-                TextField(
-                  controller: _postController,
-                  maxLines: 4,
-                  decoration: InputDecoration(
-                    hintText: "Đạt ơi, bạn đang nghĩ gì thế?",
-                    border: InputBorder.none,
-                  ),
-                ),
-
-                SizedBox(height: 10),
-
-                // Nút Đăng (gọi API khi nhấn)
-                ElevatedButton(
-                  onPressed: () async {
-                    await _createPost(_postController.text, context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
-                    minimumSize: Size(double.infinity, 40),
-                  ),
-                  child: Text("Đăng", style: TextStyle(color: Colors.white)),
-                ),
-              ],
-            ),
-          ),
-        );
+        return _buildPost(authorName, post["content"] ?? "", authorAvatar, post["images"] ?? [], 0);
       },
     );
   }
+}
 
-  Future<void> _createPost(String content, BuildContext context) async {
-    if (content.isEmpty) {
+// Một bài viết
+/// **Hiển thị bài viết**
+Widget _buildPost(String user, String content, String avatar, List<dynamic> images, int likes) {
+  return Container(
+    padding: EdgeInsets.all(10),
+    margin: EdgeInsets.only(bottom: 10),
+    color: Colors.white,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            CircleAvatar(
+              backgroundImage: avatar.startsWith("http")
+                  ? NetworkImage(avatar)
+                  : AssetImage(avatar) as ImageProvider,
+            ),
+            SizedBox(width: 10),
+            Text(user, style: TextStyle(fontWeight: FontWeight.bold)),
+            Spacer(),
+            Text("1 giờ trước", style: TextStyle(color: Colors.grey)),
+          ],
+        ),
+        SizedBox(height: 5),
+        Text(content),
+        SizedBox(height: 5),
+        if (images.isNotEmpty)
+          Row(
+            children: images.map((img) => Expanded(child: Image.network(img, height: 100))).toList(),
+          ),
+        SizedBox(height: 5),
+        Row(
+          children: [
+            Icon(Icons.favorite, color: Colors.red),
+            SizedBox(width: 5),
+            Text("$likes"),
+            SizedBox(width: 10),
+            Icon(Icons.comment),
+            Text(" Bình luận"),
+          ],
+        ),
+      ],
+    ),
+  );
+}
+
+void _showCreatePostModal(BuildContext context, String avatarUrl, String userName) {
+  TextEditingController _postController = TextEditingController();
+
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (context) {
+      return Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: Container(
+          padding: EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text("Tạo bài viết", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  IconButton(
+                    icon: Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              Divider(),
+
+              // Hiển thị thông tin user
+              Row(
+                children: [
+                  CircleAvatar(
+                    backgroundImage: avatarUrl.startsWith("http")
+                        ? NetworkImage(avatarUrl)
+                        : AssetImage(avatarUrl) as ImageProvider,
+                  ),
+                  SizedBox(width: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(userName, style: TextStyle(fontWeight: FontWeight.bold)),
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.lock, size: 14),
+                            SizedBox(width: 5),
+                            Text("Gia đình", style: TextStyle(fontSize: 12)),
+                            Icon(Icons.arrow_drop_down, size: 14),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+
+              SizedBox(height: 10),
+
+              TextField(
+                controller: _postController,
+                maxLines: 4,
+                decoration: InputDecoration(
+                  hintText: "Bạn đang nghĩ gì, $userName?",
+                  border: InputBorder.none,
+                ),
+              ),
+
+              SizedBox(height: 10),
+
+              ElevatedButton(
+                onPressed: () async {
+                  await _createPost(_postController.text, context);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  minimumSize: Size(double.infinity, 40),
+                ),
+                child: Text("Đăng", style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+
+Future<void> _createPost(String content, BuildContext context) async {
+  if (content.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Vui lòng nhập nội dung bài viết"), backgroundColor: Colors.red),
+    );
+    return;
+  }
+
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    final String? author = prefs.getString('userId');
+    final String? familyId = prefs.getString('familyId');
+
+    if (author == null || familyId == null || familyId.isEmpty) {
+      print("❌ Lỗi: Không tìm thấy thông tin userId hoặc familyId!");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Vui lòng nhập nội dung bài viết"), backgroundColor: Colors.red),
+        SnackBar(content: Text("Lỗi: Không tìm thấy thông tin người dùng"), backgroundColor: Colors.red),
       );
       return;
     }
 
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final String? author = prefs.getString('userId');  // Lấy từ SharedPreferences
-      final String? familyId = prefs.getString('familyId');  // Lấy từ SharedPreferences
+    final dio = Dio();
+    print("🚀 Gửi request tạo bài viết...");
 
-      print("===== DEBUG: Kiểm tra dữ liệu SharedPreferences =====");
-      print("User ID (author): $author");
-      print("Family ID (familyId): $familyId");
-      print("Nội dung bài viết: $content");
-      print("====================================================");
+    final response = await dio.post(
+      'https://platform-family.onrender.com/post/create',
+      data: {
+        "author": author,
+        "familyId": familyId,
+        "content": content,
+      },
+      options: Options(headers: {'Content-Type': 'application/json'}),
+    );
 
-      if (author == null || familyId == null) {
-        print("❌ Lỗi: Không tìm thấy thông tin userId hoặc familyId!");
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Lỗi: Không tìm thấy thông tin người dùng"), backgroundColor: Colors.red),
-        );
-        return;
-      }
+    print("📩 API Response Status Code: ${response.statusCode}");
+    print("📩 API Response Data: ${response.data}");
 
-      final dio = Dio();
-      print("🚀 Gửi request tạo bài viết...");
-
-      final response = await dio.post(
-        'https://platform-family.onrender.com/post/create',
-        data: {
-          "author": author,
-          "familyId": familyId,
-          "content": content,
-        },
-        options: Options(
-          headers: {'Content-Type': 'application/json'},
-        ),
-      );
-
-      print("📩 API Response Status Code: ${response.statusCode}");
-      print("📩 API Response Data: ${response.data}");
-
-      if (response.statusCode == 200 && response.data["statusCode"] == 201) {
-        print("✅ Bài viết đã được tạo thành công!");
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Bài viết đã được đăng!"), backgroundColor: Colors.green),
-        );
-
-        Navigator.pop(context); // Đóng popup sau khi đăng bài thành công
-      } else {
-        print("❌ Lỗi đăng bài: ${response.data["message"]}");
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Lỗi đăng bài: ${response.data["message"]}"), backgroundColor: Colors.red),
-        );
-      }
-
-    } catch (e) {
-      print("🚨 Lỗi kết nối API: $e");
+    if (response.statusCode == 200 && response.data["statusCode"] == 201) {
+      print("✅ Bài viết đã được tạo thành công!");
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Lỗi kết nối: $e"), backgroundColor: Colors.red),
+        SnackBar(content: Text("Bài viết đã được đăng!"), backgroundColor: Colors.green),
+      );
+
+      Navigator.pop(context);
+    } else {
+      print("❌ Lỗi đăng bài: ${response.data["message"] ?? "Không có thông báo lỗi"}");
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Lỗi đăng bài: ${response.data["message"] ?? "Không có thông báo lỗi"}"), backgroundColor: Colors.red),
       );
     }
+  } catch (e) {
+    print("🚨 Lỗi kết nối API: $e");
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Lỗi kết nối: $e"), backgroundColor: Colors.red),
+    );
   }
-
-
 }
+
+

@@ -279,22 +279,26 @@ class _AuthScreenState extends State<AuthScreen> {
         },
       );
 
-      print(response.data);
-
       if (response.statusCode == 200 && response.data['ok'] == true) {
-        // Lấy ID từ response
+        // Lấy dữ liệu từ response
         String userId = response.data['data']['_id'];
+        String name = response.data['data']['name'];
+        String avatar = response.data['data']['avatar'];
 
-        // Lưu ID vào SharedPreferences
+        // Lưu thông tin vào SharedPreferences
         SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.setString("userId", userId);
+        await prefs.setString('userId', userId);
+        await prefs.setString('name', name);
+        await prefs.setString('avatar', avatar);
 
         print("User ID đã được lưu: $userId");
+        print("Tên: $name");
+        print("Avatar: $avatar");
 
         // Chuyển hướng sang màn hình tham gia gia đình
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => ThamGiaGiaDinh()),
+          MaterialPageRoute(builder: (context) => WelcomeScreen()),
         );
       }
     } catch (e) {

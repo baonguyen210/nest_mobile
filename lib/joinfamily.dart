@@ -250,16 +250,30 @@
 //   String? selectedRole;
 //   String? userId; // ID user động
 //
+//   @override
+//   void initState() {
+//     super.initState();
+//     _loadUserId(); // Gọi hàm lấy userId khi mở màn hình
+//   }
+//
 //   Future<void> _loadUserId() async {
 //     SharedPreferences prefs = await SharedPreferences.getInstance();
 //     setState(() {
 //       userId = prefs.getString("userId"); // Lấy ID từ SharedPreferences
 //     });
+//     print("User ID đã load: $userId");
 //   }
 //
 //   Future<void> createFamily() async {
+//     print("🚀 Hàm createFamily() được gọi!");
+//
 //     if (_controller.text.isEmpty || selectedRole == null || userId == null) {
-//       return; // Không gọi API nếu thiếu dữ liệu
+//       print("⚠️ Thiếu dữ liệu: Tên gia đình: ${_controller.text}, Vai trò: $selectedRole, UserID: $userId");
+//
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         SnackBar(content: Text("Vui lòng nhập đầy đủ thông tin trước khi tạo gia đình!")),
+//       );
+//       return;
 //     }
 //
 //     try {
@@ -273,20 +287,57 @@
 //         },
 //       );
 //
-//       print("Gia đình được tạo: ${response.data}");
+//       print("📌 Phản hồi API khi tạo gia đình: ${response.data}");
 //
-//       if (response.statusCode == 200) {
+//       if ((response.statusCode == 200 || response.statusCode == 201) && response.data['ok'] == true) {
+//         String familyId = response.data["data"]["_id"]; // Lấy familyId từ API
+//
+//         print("✅ Gia đình đã được tạo thành công với familyId: $familyId");
+//
+//         // Lưu familyId vào SharedPreferences
+//         SharedPreferences prefs = await SharedPreferences.getInstance();
+//         await prefs.setString('familyId', familyId);
+//
+//         print("💾 familyId đã được lưu vào SharedPreferences");
+//
 //         ScaffoldMessenger.of(context).showSnackBar(
-//           SnackBar(content: Text("Gia đình đã được tạo thành công!")),
+//           SnackBar(
+//             content: Text("Gia đình đã được tạo thành công!"),
+//             backgroundColor: Colors.green,
+//           ),
+//         );
+//
+//         // Điều hướng về trang chủ sau khi tạo gia đình thành công
+//         Future.delayed(Duration(seconds: 2), () {
+//           Navigator.pushReplacement(
+//             context,
+//             MaterialPageRoute(builder: (context) => Homepage()),
+//           );
+//         });
+//       } else {
+//         print("❌ Tạo gia đình thất bại: ${response.data}");
+//
+//         ScaffoldMessenger.of(context).showSnackBar(
+//           SnackBar(
+//             content: Text("Tạo gia đình thất bại. Vui lòng thử lại!"),
+//             backgroundColor: Colors.red,
+//           ),
 //         );
 //       }
 //     } catch (e) {
-//       print("Lỗi tạo gia đình: $e");
+//       print("🚨 Lỗi khi tạo gia đình: $e");
+//
 //       ScaffoldMessenger.of(context).showSnackBar(
-//         SnackBar(content: Text("Không thể tạo gia đình!")),
+//         SnackBar(
+//           content: Text("Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng!"),
+//           backgroundColor: Colors.red,
+//         ),
 //       );
 //     }
 //   }
+//
+//
+//
 //
 //   @override
 //   Widget build(BuildContext context) {
@@ -337,36 +388,30 @@
 //             SizedBox(
 //               width: double.infinity,
 //               child: ElevatedButton(
-//                 onPressed: _controller.text.isNotEmpty &&
-//                     selectedRole != null
+//                 onPressed: _controller.text.isNotEmpty && selectedRole != null
 //                     ? () {
-//                   Navigator.push(
-//                     context,
-//                     MaterialPageRoute(
-//                         builder: (context) => Homepage()),
-//                   );
+//                   print("🟢 Nút 'Tiếp tục' được bấm!");
+//                   createFamily();
 //                 }
-//                     : null, // Nếu chưa nhập tên gia đình hoặc chưa chọn vai trò, disable button
+//                     : null, // Disable nếu chưa nhập tên gia đình hoặc chưa chọn vai trò
 //                 style: ElevatedButton.styleFrom(
-//                   backgroundColor: _controller.text.isNotEmpty &&
-//                       selectedRole != null
+//                   backgroundColor: _controller.text.isNotEmpty && selectedRole != null
 //                       ? Colors.blue
 //                       : Colors.grey[300],
 //                   padding: EdgeInsets.symmetric(vertical: 15),
-//                   shape: RoundedRectangleBorder(
-//                       borderRadius: BorderRadius.circular(8)),
+//                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
 //                 ),
 //                 child: Text(
 //                   'Tiếp tục',
 //                   style: TextStyle(
-//                       color: _controller.text.isNotEmpty &&
-//                           selectedRole != null
-//                           ? Colors.white
-//                           : Colors.grey,
-//                       fontSize: 16),
+//                     color: _controller.text.isNotEmpty && selectedRole != null
+//                         ? Colors.white
+//                         : Colors.grey,
+//                     fontSize: 16,
+//                   ),
 //                 ),
 //               ),
-//             )
+//             ),
 //           ],
 //         ),
 //       ),
@@ -399,11 +444,11 @@
 //   }
 // }
 
-
 import 'package:flutter/material.dart';
 import 'package:nest_mobile/homepage.dart';
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 void main() {
   runApp(MyApp());
@@ -414,7 +459,137 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: ThamGiaGiaDinh(),
+      home: WelcomeScreen(),
+    );
+  }
+}
+
+class WelcomeScreen extends StatefulWidget {
+  @override
+  _WelcomeScreenState createState() => _WelcomeScreenState();
+}
+
+class _WelcomeScreenState extends State<WelcomeScreen> {
+  TextEditingController _nameController = TextEditingController();
+  String? userId;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserId();
+  }
+
+  Future<void> _loadUserId() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      userId = prefs.getString("userId");
+    });
+    print("🔹 User ID đã load: $userId");
+  }
+
+  Future<void> _updateUserName() async {
+    if (_nameController.text.isEmpty || userId == null) {
+      print("⚠️ Lỗi: userId hoặc tên trống!");
+      print("🔹 userId: $userId");
+      print("🔹 name: ${_nameController.text}");
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Vui lòng nhập tên trước khi tiếp tục!")),
+      );
+      return;
+    }
+
+    String apiUrl = 'https://platform-family.onrender.com/user/update-info/$userId';
+
+    // ✅ Đảm bảo đúng thứ tự: "avatar" trước "name"
+    Map<String, dynamic> requestData = {
+      "avatar": "", // Avatar trống
+      "name": _nameController.text.trim(),
+    };
+
+    print("🌐 Gửi request đến API: $apiUrl");
+    print("📌 Dữ liệu gửi đi (chuẩn JSON): ${jsonEncode(requestData)}");
+
+    try {
+      var dio = Dio();
+      Response response = await dio.put( // ✅ Sử dụng PUT thay vì POST
+        apiUrl,
+        data: requestData,
+      );
+
+      print("📌 Phản hồi API khi cập nhật tên: ${response.statusCode}");
+      print("📌 Dữ liệu trả về: ${response.data}");
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Cập nhật tên thành công!"), backgroundColor: Colors.green),
+        );
+
+        Future.delayed(Duration(seconds: 1), () {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => ThamGiaGiaDinh()),
+          );
+        });
+      } else {
+        print("❌ API trả về lỗi: ${response.statusCode} - ${response.data}");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Cập nhật thất bại. Vui lòng thử lại!"), backgroundColor: Colors.red),
+        );
+      }
+    } catch (e) {
+      print("🚨 Lỗi khi cập nhật tên: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng!"), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset('assets/images/family.png', height: 350),
+            SizedBox(height: 50),
+            Text(
+              'Chúc mừng, bạn đã là thành viên của',
+              style: TextStyle(fontSize: 18),
+              textAlign: TextAlign.center,
+            ),
+            Text(
+              'Đại Gia Đình NEST.',
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 20),
+            TextField(
+              controller: _nameController,
+              decoration: InputDecoration(
+                hintText: "Nhập tên của bạn",
+                border: OutlineInputBorder(),
+              ),
+            ),
+            SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _updateUserName,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  padding: EdgeInsets.symmetric(vertical: 15),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: Text("Tiếp tục", style: TextStyle(color: Colors.white, fontSize: 16)),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
