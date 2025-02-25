@@ -39,18 +39,37 @@
 //           "password": password
 //         },
 //       );
-//       print(response.data);
 //
-//       if (response.statusCode == 200) {
+//       if (response.statusCode == 200 && response.data['ok'] == true) {
+//         // Lấy dữ liệu từ response
+//         String userId = response.data['data']['_id'];
+//         String name = response.data['data']['name'];
+//         String avatar = response.data['data']['avatar'];
+//         String accessToken = response.data['data']['access_token']; // ✅ Lấy token
+//
+//         // Lưu thông tin vào SharedPreferences
+//         SharedPreferences prefs = await SharedPreferences.getInstance();
+//         await prefs.setString('userId', userId);
+//         await prefs.setString('name', name);
+//         await prefs.setString('avatar', avatar);
+//         await prefs.setString('token', accessToken); // ✅ Lưu token
+//
+//         print("User ID đã được lưu: $userId");
+//         print("Tên: $name");
+//         print("Avatar: $avatar");
+//         print("Token lưu: $accessToken");
+//
+//         // Chuyển hướng sang màn hình tham gia gia đình
 //         Navigator.push(
 //           context,
-//           MaterialPageRoute(builder: (context) => ThamGiaGiaDinh()),
+//           MaterialPageRoute(builder: (context) => WelcomeScreen()),
 //         );
 //       }
 //     } catch (e) {
 //       print("Đăng nhập thất bại: $e");
 //     }
 //   }
+//
 //
 //   Future<void> register() async {
 //     try {
@@ -235,8 +254,6 @@
 //   }
 // }
 
-
-
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:nest_mobile/homepage.dart';
@@ -266,7 +283,7 @@ class _AuthScreenState extends State<AuthScreen> {
   bool isLogin = true;
   String email = "";
   String password = "";
-  String name = "None";
+  String name = "";
 
   Future<void> login() async {
     try {
@@ -284,16 +301,19 @@ class _AuthScreenState extends State<AuthScreen> {
         String userId = response.data['data']['_id'];
         String name = response.data['data']['name'];
         String avatar = response.data['data']['avatar'];
+        String accessToken = response.data['data']['access_token']; // ✅ Lấy token
 
         // Lưu thông tin vào SharedPreferences
         SharedPreferences prefs = await SharedPreferences.getInstance();
         await prefs.setString('userId', userId);
         await prefs.setString('name', name);
         await prefs.setString('avatar', avatar);
+        await prefs.setString('token', accessToken); // ✅ Lưu token
 
         print("User ID đã được lưu: $userId");
         print("Tên: $name");
         print("Avatar: $avatar");
+        print("Token lưu: $accessToken");
 
         // Chuyển hướng sang màn hình tham gia gia đình
         Navigator.push(
@@ -318,16 +338,37 @@ class _AuthScreenState extends State<AuthScreen> {
           "password": password
         },
       );
-      print(response.data);
-      if (response.statusCode == 200) {
+
+      if (response.statusCode == 200 && response.data['ok'] == true) {
         setState(() {
           isLogin = true;
         });
+
+        // ✅ Hiển thị thông báo đăng ký thành công
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Đăng ký tài khoản thành công!"),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Đăng ký thất bại. Vui lòng thử lại!"),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     } catch (e) {
-      print("Đăng ký thất bại: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Lỗi kết nối máy chủ! Vui lòng kiểm tra lại."),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
+
 
   @override
   Widget build(BuildContext context) {

@@ -2,6 +2,9 @@
 // import 'package:nest_mobile/homepage.dart';
 // import 'package:dio/dio.dart';
 // import 'package:shared_preferences/shared_preferences.dart';
+// import 'dart:convert';
+// import 'choose_family.dart'; // Trang mới để hiển thị gia đình có sẵn
+//
 //
 // void main() {
 //   runApp(MyApp());
@@ -12,7 +15,201 @@
 //   Widget build(BuildContext context) {
 //     return MaterialApp(
 //       debugShowCheckedModeBanner: false,
-//       home: ThamGiaGiaDinh(),
+//       home: WelcomeScreen(),
+//     );
+//   }
+// }
+//
+// class WelcomeScreen extends StatefulWidget {
+//   @override
+//   _WelcomeScreenState createState() => _WelcomeScreenState();
+// }
+//
+// class _WelcomeScreenState extends State<WelcomeScreen> {
+//   TextEditingController _nameController = TextEditingController();
+//   String? userId;
+//   String? userName;
+//   String? token;
+//   bool isLoading = true; // Trạng thái load dữ liệu
+//
+//   @override
+//   void initState() {
+//     super.initState();
+//     _loadUserId();
+//     _initialize();
+//   }
+//
+//   Future<void> _initialize() async {
+//     SharedPreferences prefs = await SharedPreferences.getInstance();
+//     userId = prefs.getString("userId");
+//     userName = prefs.getString("name");
+//     token = prefs.getString("token");
+//
+//     if (userName != null && userName!.isNotEmpty) {
+//       print("✅ Người dùng đã có tên: $userName. Bỏ qua nhập tên.");
+//       _checkExistingFamily();
+//     } else {
+//       setState(() {
+//         isLoading = false;
+//       });
+//     }
+//   }
+//
+//   Future<void> _checkExistingFamily() async {
+//     if (token == null) {
+//       print("⚠️ Không có token, yêu cầu đăng nhập lại.");
+//       return;
+//     }
+//
+//     try {
+//       var dio = Dio();
+//       Response response = await dio.get(
+//         'https://platform-family.onrender.com/family/get-family-user',
+//         options: Options(headers: {"Authorization": "Bearer $token"}),
+//       );
+//
+//       if (response.statusCode == 200 && response.data['data'].isNotEmpty) {
+//         print("✅ Người dùng đã có gia đình, chuyển đến `ChooseFamily.dart`.");
+//         Navigator.pushReplacement(
+//           context,
+//           MaterialPageRoute(builder: (context) => ChooseFamilyScreen(families: response.data['data'])),
+//         );
+//       } else {
+//         print("❌ Người dùng chưa có gia đình.");
+//         Navigator.pushReplacement(
+//           context,
+//           MaterialPageRoute(builder: (context) => ThamGiaGiaDinh()),
+//         );
+//       }
+//     } catch (e) {
+//       print("🚨 Lỗi kiểm tra gia đình: $e");
+//     }
+//   }
+//
+//   Future<void> _loadUserId() async {
+//     SharedPreferences prefs = await SharedPreferences.getInstance();
+//     setState(() {
+//       userId = prefs.getString("userId");
+//     });
+//     print("🔹 User ID đã load: $userId");
+//   }
+//
+//   Future<void> _updateUserName() async {
+//     if (_nameController.text.isEmpty || userId == null) {
+//       print("⚠️ Lỗi: userId hoặc tên trống!");
+//       print("🔹 userId: $userId");
+//       print("🔹 name: ${_nameController.text}");
+//
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         SnackBar(content: Text("Vui lòng nhập tên trước khi tiếp tục!")),
+//       );
+//       return;
+//     }
+//
+//     String apiUrl = 'https://platform-family.onrender.com/user/update-info/$userId';
+//
+//     // ✅ Đảm bảo đúng thứ tự: "avatar" trước "name"
+//     Map<String, dynamic> requestData = {
+//       "avatar": "", // Avatar trống
+//       "name": _nameController.text.trim(),
+//     };
+//
+//     print("🌐 Gửi request đến API: $apiUrl");
+//     print("📌 Dữ liệu gửi đi (chuẩn JSON): ${jsonEncode(requestData)}");
+//
+//     try {
+//       var dio = Dio();
+//       Response response = await dio.put( // ✅ Sử dụng PUT thay vì POST
+//         apiUrl,
+//         data: requestData,
+//       );
+//
+//       print("📌 Phản hồi API khi cập nhật tên: ${response.statusCode}");
+//       print("📌 Dữ liệu trả về: ${response.data}");
+//
+//       if (response.statusCode == 200 || response.statusCode == 201) {
+//         // Lưu tên vào SharedPreferences
+//         SharedPreferences prefs = await SharedPreferences.getInstance();
+//         await prefs.setString('name', _nameController.text.trim());
+//
+//         print("💾 Đã lưu tên vào SharedPreferences: ${_nameController.text}");
+//
+//         ScaffoldMessenger.of(context).showSnackBar(
+//           SnackBar(content: Text("Cập nhật tên thành công!"), backgroundColor: Colors.green),
+//         );
+//
+//         Future.delayed(Duration(seconds: 1), () {
+//           Navigator.pushReplacement(
+//             context,
+//             MaterialPageRoute(builder: (context) => ThamGiaGiaDinh()),
+//           );
+//         });
+//       }
+//       else {
+//         print("❌ API trả về lỗi: ${response.statusCode} - ${response.data}");
+//         ScaffoldMessenger.of(context).showSnackBar(
+//           SnackBar(content: Text("Cập nhật thất bại. Vui lòng thử lại!"), backgroundColor: Colors.red),
+//         );
+//       }
+//     } catch (e) {
+//       print("🚨 Lỗi khi cập nhật tên: $e");
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         SnackBar(content: Text("Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng!"), backgroundColor: Colors.red),
+//       );
+//     }
+//   }
+//
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     if (isLoading) {
+//       return Scaffold(body: Center(child: CircularProgressIndicator()));
+//     }
+//
+//     return Scaffold(
+//       body: Padding(
+//         padding: const EdgeInsets.all(20.0),
+//         child: Column(
+//           mainAxisAlignment: MainAxisAlignment.center,
+//           children: [
+//             Image.asset('assets/images/family.png', height: 350),
+//             SizedBox(height: 50),
+//             Text(
+//               'Chúc mừng, bạn đã là thành viên của',
+//               style: TextStyle(fontSize: 18),
+//               textAlign: TextAlign.center,
+//             ),
+//             Text(
+//               'Đại Gia Đình NEST.',
+//               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+//               textAlign: TextAlign.center,
+//             ),
+//             SizedBox(height: 20),
+//             TextField(
+//               controller: _nameController,
+//               decoration: InputDecoration(
+//                 hintText: "Nhập tên của bạn",
+//                 border: OutlineInputBorder(),
+//               ),
+//             ),
+//             SizedBox(height: 20),
+//             SizedBox(
+//               width: double.infinity,
+//               child: ElevatedButton(
+//                 onPressed: _updateUserName,
+//                 style: ElevatedButton.styleFrom(
+//                   backgroundColor: Colors.blue,
+//                   padding: EdgeInsets.symmetric(vertical: 15),
+//                   shape: RoundedRectangleBorder(
+//                       borderRadius: BorderRadius.circular(8)),
+//                 ),
+//                 child: Text("Tiếp tục",
+//                     style: TextStyle(color: Colors.white, fontSize: 16)),
+//               ),
+//             ),
+//           ],
+//         ),
+//       ),
 //     );
 //   }
 // }
@@ -77,8 +274,8 @@
 //
 // class _NhapMaScreenState extends State<NhapMaScreen> {
 //   List<TextEditingController> controllers =
-//   List.generate(6, (index) => TextEditingController());
-//   List<FocusNode> focusNodes = List.generate(6, (index) => FocusNode());
+//   List.generate(8, (index) => TextEditingController());
+//   List<FocusNode> focusNodes = List.generate(8, (index) => FocusNode());
 //
 //   @override
 //   void dispose() {
@@ -93,50 +290,88 @@
 //
 //   Widget buildCodeBox(int index) {
 //     return Container(
-//       width: 45,
-//       height: 45,
+//       width: 38, // Giảm từ 45 xuống 38
+//       height: 50, // Giảm từ 60 xuống 50
 //       alignment: Alignment.center,
 //       decoration: BoxDecoration(
 //         color: controllers[index].text.isEmpty && index == firstEmptyIndex()
 //             ? Colors.yellow
 //             : Colors.grey[300],
-//         borderRadius: BorderRadius.circular(8),
+//         borderRadius: BorderRadius.circular(6), // Giảm góc bo tròn một chút
 //       ),
 //       child: TextField(
-//         controller: controllers[index],
-//         focusNode: focusNodes[index],
-//         textAlign: TextAlign.center,
-//         maxLength: 1,
-//         style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-//         keyboardType: TextInputType.text,
-//         textCapitalization: TextCapitalization.characters, // Tự động in hoa
-//         textInputAction:
-//         index < 5 ? TextInputAction.next : TextInputAction.done,
-//         decoration: InputDecoration(
-//           counterText: "",
-//           border: InputBorder.none,
-//         ),
-//         onChanged: (value) {
-//           controllers[index].value = controllers[index].value.copyWith(
-//             text: value.toUpperCase(), // Chuyển thành chữ in hoa
-//             selection: TextSelection.collapsed(offset: value.length),
-//           );
-//           if (value.isNotEmpty && index < 5) {
-//             FocusScope.of(context).requestFocus(focusNodes[index + 1]);
-//           } else if (value.isEmpty && index > 0) {
-//             FocusScope.of(context).requestFocus(focusNodes[index - 1]);
+//           controller: controllers[index],
+//           focusNode: focusNodes[index],
+//           textAlign: TextAlign.center,
+//           maxLength: 1,
+//           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold), // Giảm font size
+//           keyboardType: TextInputType.text,
+//           textCapitalization: TextCapitalization.characters,
+//           textInputAction: index < 7 ? TextInputAction.next : TextInputAction.done,
+//           decoration: InputDecoration(
+//             counterText: "",
+//             border: InputBorder.none,
+//           ),
+//           onChanged: (value) {
+//             controllers[index].value = controllers[index].value.copyWith(
+//               text: value.toUpperCase(),
+//               selection: TextSelection.collapsed(offset: value.length),
+//             );
+//
+//             if (value.isNotEmpty && index < 7) {
+//               FocusScope.of(context).requestFocus(focusNodes[index + 1]);
+//             } else if (value.isEmpty && index > 0) {
+//               FocusScope.of(context).requestFocus(focusNodes[index - 1]);
+//             }
+//
+//             setState(() {});
 //           }
-//           setState(() {});
-//         },
 //       ),
 //     );
 //   }
+//
+//
 //
 //   int firstEmptyIndex() {
 //     for (int i = 0; i < controllers.length; i++) {
 //       if (controllers[i].text.isEmpty) return i;
 //     }
 //     return controllers.length;
+//   }
+//
+//
+//   Future<void> joinFamily() async {
+//     String codeNumber = controllers.map((c) => c.text).join().trim();
+//     print("🚀 Đang gửi mã lời mời: '$codeNumber'");
+//
+//     try {
+//       SharedPreferences prefs = await SharedPreferences.getInstance();
+//       String? token = prefs.getString("token");
+//
+//       var dio = Dio();
+//       Response response = await dio.post(
+//         'https://platform-family.onrender.com/family/join-family',
+//         data: {"codeNumber": codeNumber},
+//         options: Options(
+//           headers: {"Authorization": "Bearer $token"},
+//         ),
+//       );
+//
+//       if (response.statusCode == 200) {
+//         String familyId = response.data["data"]["familyId"];
+//         await prefs.setString('familyId', familyId);
+//         print("✅ Family ID đã được lưu: $familyId");
+//
+//         Navigator.pushReplacement(
+//           context,
+//           MaterialPageRoute(builder: (context) => Homepage()),
+//         );
+//       } else {
+//         print("❌ Mã không hợp lệ hoặc lỗi!");
+//       }
+//     } catch (e) {
+//       print("🚨 Lỗi khi tham gia gia đình: $e");
+//     }
 //   }
 //
 //   @override
@@ -157,14 +392,15 @@
 //             Row(
 //               mainAxisAlignment: MainAxisAlignment.center,
 //               children: List.generate(
-//                   6,
-//                       (index) => Padding(
-//                     padding: const EdgeInsets.symmetric(horizontal: 4),
-//                     child: SizedBox(
-//                       height: 60, // Tăng chiều cao ô nhập
-//                       child: buildCodeBox(index),
-//                     ),
-//                   )),
+//                 8,
+//                     (index) => Padding(
+//                   padding: const EdgeInsets.symmetric(horizontal: 4),
+//                   child: SizedBox(
+//                     height: 60,
+//                     child: buildCodeBox(index),
+//                   ),
+//                 ),
+//               ),
 //             ),
 //             SizedBox(height: 10),
 //             Text(
@@ -176,17 +412,14 @@
 //               width: double.infinity,
 //               child: ElevatedButton(
 //                 onPressed: controllers.every((c) => c.text.isNotEmpty)
-//                     ? () {
-//                   // Xử lý khi gửi mã
-//                 }
-//                     : null, // Vô hiệu hoá nếu chưa nhập đủ
+//                     ? joinFamily
+//                     : null,
 //                 style: ElevatedButton.styleFrom(
 //                   backgroundColor: controllers.every((c) => c.text.isNotEmpty)
 //                       ? Colors.blue
 //                       : Colors.grey[300],
 //                   padding: EdgeInsets.symmetric(vertical: 15),
-//                   shape: RoundedRectangleBorder(
-//                       borderRadius: BorderRadius.circular(8)),
+//                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
 //                 ),
 //                 child: Text(
 //                   'Gửi',
@@ -202,10 +435,7 @@
 //             SizedBox(height: 180),
 //             Text(
 //               'HOẶC',
-//               style: TextStyle(
-//                 fontWeight: FontWeight.bold,
-//                 fontSize: 18,
-//               ),
+//               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
 //             ),
 //             SizedBox(height: 3),
 //             Text('Bạn chưa có NHÓM?'),
@@ -224,15 +454,14 @@
 //                 style: ElevatedButton.styleFrom(
 //                   backgroundColor: Colors.blue,
 //                   padding: EdgeInsets.symmetric(vertical: 15),
-//                   shape: RoundedRectangleBorder(
-//                       borderRadius: BorderRadius.circular(8)),
+//                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
 //                 ),
 //                 child: Text(
 //                   'Tạo vòng tròn mới',
 //                   style: TextStyle(color: Colors.white, fontSize: 16),
 //                 ),
 //               ),
-//             )
+//             ),
 //           ],
 //         ),
 //       ),
@@ -247,7 +476,6 @@
 //
 // class _TaoNhomScreenState extends State<TaoNhomScreen> {
 //   TextEditingController _controller = TextEditingController();
-//   String? selectedRole;
 //   String? userId; // ID user động
 //
 //   @override
@@ -267,8 +495,8 @@
 //   Future<void> createFamily() async {
 //     print("🚀 Hàm createFamily() được gọi!");
 //
-//     if (_controller.text.isEmpty || selectedRole == null || userId == null) {
-//       print("⚠️ Thiếu dữ liệu: Tên gia đình: ${_controller.text}, Vai trò: $selectedRole, UserID: $userId");
+//     if (_controller.text.isEmpty || userId == null) {
+//       print("⚠️ Thiếu dữ liệu: Tên gia đình: ${_controller.text}, UserID: $userId");
 //
 //       ScaffoldMessenger.of(context).showSnackBar(
 //         SnackBar(content: Text("Vui lòng nhập đầy đủ thông tin trước khi tạo gia đình!")),
@@ -370,32 +598,18 @@
 //             SizedBox(height: 10),
 //             Text('Bạn có thể thay đổi tên Gia đình trong cài đặt.',
 //                 textAlign: TextAlign.center, style: TextStyle(fontSize: 13)),
-//             SizedBox(height: 50),
-//             Text('Vai trò của bạn trong gia đình này là gì?',
-//                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-//             SizedBox(height: 10),
-//             Column(
-//               children: [
-//                 buildRoleButton('Ông'),
-//                 buildRoleButton('Bà'),
-//                 buildRoleButton('Ba'),
-//                 buildRoleButton('Mẹ'),
-//                 buildRoleButton('Con trai/Con gái/Con'),
-//                 buildRoleButton('Khác'),
-//               ],
-//             ),
 //             SizedBox(height: 10),
 //             SizedBox(
 //               width: double.infinity,
 //               child: ElevatedButton(
-//                 onPressed: _controller.text.isNotEmpty && selectedRole != null
+//                 onPressed: _controller.text.isNotEmpty != null
 //                     ? () {
 //                   print("🟢 Nút 'Tiếp tục' được bấm!");
 //                   createFamily();
 //                 }
 //                     : null, // Disable nếu chưa nhập tên gia đình hoặc chưa chọn vai trò
 //                 style: ElevatedButton.styleFrom(
-//                   backgroundColor: _controller.text.isNotEmpty && selectedRole != null
+//                   backgroundColor: _controller.text.isNotEmpty != null
 //                       ? Colors.blue
 //                       : Colors.grey[300],
 //                   padding: EdgeInsets.symmetric(vertical: 15),
@@ -404,7 +618,7 @@
 //                 child: Text(
 //                   'Tiếp tục',
 //                   style: TextStyle(
-//                     color: _controller.text.isNotEmpty && selectedRole != null
+//                     color: _controller.text.isNotEmpty != null
 //                         ? Colors.white
 //                         : Colors.grey,
 //                     fontSize: 16,
@@ -418,37 +632,18 @@
 //     );
 //   }
 //
-//   Widget buildRoleButton(String role) {
-//     return GestureDetector(
-//       onTap: () {
-//         setState(() {
-//           selectedRole = role;
-//         });
-//       },
-//       child: Container(
-//         margin: EdgeInsets.symmetric(vertical: 5),
-//         padding: EdgeInsets.all(12),
-//         decoration: BoxDecoration(
-//           color: selectedRole == role ? Colors.blue : Colors.grey[200],
-//           borderRadius: BorderRadius.circular(8),
-//         ),
-//         width: double.infinity,
-//         child: Text(
-//           role,
-//           textAlign: TextAlign.center,
-//           style: TextStyle(
-//               color: selectedRole == role ? Colors.white : Colors.black),
-//         ),
-//       ),
-//     );
-//   }
 // }
+
 
 import 'package:flutter/material.dart';
 import 'package:nest_mobile/homepage.dart';
 import 'package:dio/dio.dart';
+import 'package:nest_mobile/show_family_code.dart';
+import 'package:nest_mobile/upload_avatar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'choose_family.dart'; // Trang mới để hiển thị gia đình có sẵn
+
 
 void main() {
   runApp(MyApp());
@@ -472,11 +667,63 @@ class WelcomeScreen extends StatefulWidget {
 class _WelcomeScreenState extends State<WelcomeScreen> {
   TextEditingController _nameController = TextEditingController();
   String? userId;
+  bool isButtonEnabled = false; // Thêm biến này vào trong class _TaoNhomScreenState
+  String? userName;
+  String? token;
+  bool isLoading = true; // Trạng thái load dữ liệu
 
   @override
   void initState() {
     super.initState();
     _loadUserId();
+    _initialize();
+  }
+
+  Future<void> _initialize() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    userId = prefs.getString("userId");
+    userName = prefs.getString("name");
+    token = prefs.getString("token");
+
+    if (userName != null && userName!.isNotEmpty) {
+      print("✅ Người dùng đã có tên: $userName. Bỏ qua nhập tên.");
+      _checkExistingFamily();
+    } else {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _checkExistingFamily() async {
+    if (token == null) {
+      print("⚠️ Không có token, yêu cầu đăng nhập lại.");
+      return;
+    }
+
+    try {
+      var dio = Dio();
+      Response response = await dio.get(
+        'https://platform-family.onrender.com/family/get-family-user',
+        options: Options(headers: {"Authorization": "Bearer $token"}),
+      );
+
+      if (response.statusCode == 200 && response.data['data'].isNotEmpty) {
+        print("✅ Người dùng đã có gia đình, chuyển đến `ChooseFamily.dart`.");
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => ChooseFamilyScreen(families: response.data['data'])),
+        );
+      } else {
+        print("❌ Người dùng chưa có gia đình.");
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => ThamGiaGiaDinh()),
+        );
+      }
+    } catch (e) {
+      print("🚨 Lỗi kiểm tra gia đình: $e");
+    }
   }
 
   Future<void> _loadUserId() async {
@@ -489,58 +736,52 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
   Future<void> _updateUserName() async {
     if (_nameController.text.isEmpty || userId == null) {
-      print("⚠️ Lỗi: userId hoặc tên trống!");
-      print("🔹 userId: $userId");
-      print("🔹 name: ${_nameController.text}");
-
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Vui lòng nhập tên trước khi tiếp tục!")),
+        SnackBar(content: Text("Vui lòng nhập tên trước khi tiếp tục!"), backgroundColor: Colors.red),
       );
       return;
     }
 
     String apiUrl = 'https://platform-family.onrender.com/user/update-info/$userId';
-
-    // ✅ Đảm bảo đúng thứ tự: "avatar" trước "name"
     Map<String, dynamic> requestData = {
       "avatar": "", // Avatar trống
       "name": _nameController.text.trim(),
     };
 
-    print("🌐 Gửi request đến API: $apiUrl");
-    print("📌 Dữ liệu gửi đi (chuẩn JSON): ${jsonEncode(requestData)}");
-
     try {
       var dio = Dio();
-      Response response = await dio.put( // ✅ Sử dụng PUT thay vì POST
-        apiUrl,
-        data: requestData,
-      );
-
-      print("📌 Phản hồi API khi cập nhật tên: ${response.statusCode}");
-      print("📌 Dữ liệu trả về: ${response.data}");
+      Response response = await dio.put(apiUrl, data: requestData);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setString('name', _nameController.text.trim());
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Cập nhật tên thành công!"), backgroundColor: Colors.green),
         );
 
         Future.delayed(Duration(seconds: 1), () {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => ThamGiaGiaDinh()),
-          );
+          // ✅ Kiểm tra avatar trước khi điều hướng
+          if (response.data['data']['avatar'] == "") {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => UploadAvatarScreen()), // ✅ Chuyển đến Upload Avatar
+            );
+          } else {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => ThamGiaGiaDinh()),
+            );
+          }
         });
       } else {
-        print("❌ API trả về lỗi: ${response.statusCode} - ${response.data}");
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Cập nhật thất bại. Vui lòng thử lại!"), backgroundColor: Colors.red),
         );
       }
     } catch (e) {
-      print("🚨 Lỗi khi cập nhật tên: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng!"), backgroundColor: Colors.red),
+        SnackBar(content: Text("Không thể kết nối đến máy chủ!"), backgroundColor: Colors.red),
       );
     }
   }
@@ -548,6 +789,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -582,9 +827,11 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
                   padding: EdgeInsets.symmetric(vertical: 15),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
                 ),
-                child: Text("Tiếp tục", style: TextStyle(color: Colors.white, fontSize: 16)),
+                child: Text("Tiếp tục",
+                    style: TextStyle(color: Colors.white, fontSize: 16)),
               ),
             ),
           ],
@@ -654,8 +901,8 @@ class NhapMaScreen extends StatefulWidget {
 
 class _NhapMaScreenState extends State<NhapMaScreen> {
   List<TextEditingController> controllers =
-  List.generate(6, (index) => TextEditingController());
-  List<FocusNode> focusNodes = List.generate(6, (index) => FocusNode());
+  List.generate(8, (index) => TextEditingController());
+  List<FocusNode> focusNodes = List.generate(8, (index) => FocusNode());
 
   @override
   void dispose() {
@@ -670,44 +917,47 @@ class _NhapMaScreenState extends State<NhapMaScreen> {
 
   Widget buildCodeBox(int index) {
     return Container(
-      width: 45,
-      height: 45,
+      width: 38, // Giảm từ 45 xuống 38
+      height: 50, // Giảm từ 60 xuống 50
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: controllers[index].text.isEmpty && index == firstEmptyIndex()
             ? Colors.yellow
             : Colors.grey[300],
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(6), // Giảm góc bo tròn một chút
       ),
       child: TextField(
-        controller: controllers[index],
-        focusNode: focusNodes[index],
-        textAlign: TextAlign.center,
-        maxLength: 1,
-        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-        keyboardType: TextInputType.text,
-        textCapitalization: TextCapitalization.characters, // Tự động in hoa
-        textInputAction:
-        index < 5 ? TextInputAction.next : TextInputAction.done,
-        decoration: InputDecoration(
-          counterText: "",
-          border: InputBorder.none,
-        ),
-        onChanged: (value) {
-          controllers[index].value = controllers[index].value.copyWith(
-            text: value.toUpperCase(), // Chuyển thành chữ in hoa
-            selection: TextSelection.collapsed(offset: value.length),
-          );
-          if (value.isNotEmpty && index < 5) {
-            FocusScope.of(context).requestFocus(focusNodes[index + 1]);
-          } else if (value.isEmpty && index > 0) {
-            FocusScope.of(context).requestFocus(focusNodes[index - 1]);
+          controller: controllers[index],
+          focusNode: focusNodes[index],
+          textAlign: TextAlign.center,
+          maxLength: 1,
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold), // Giảm font size
+          keyboardType: TextInputType.text,
+          textCapitalization: TextCapitalization.characters,
+          textInputAction: index < 7 ? TextInputAction.next : TextInputAction.done,
+          decoration: InputDecoration(
+            counterText: "",
+            border: InputBorder.none,
+          ),
+          onChanged: (value) {
+            controllers[index].value = controllers[index].value.copyWith(
+              text: value.toUpperCase(),
+              selection: TextSelection.collapsed(offset: value.length),
+            );
+
+            if (value.isNotEmpty && index < 7) {
+              FocusScope.of(context).requestFocus(focusNodes[index + 1]);
+            } else if (value.isEmpty && index > 0) {
+              FocusScope.of(context).requestFocus(focusNodes[index - 1]);
+            }
+
+            setState(() {});
           }
-          setState(() {});
-        },
       ),
     );
   }
+
+
 
   int firstEmptyIndex() {
     for (int i = 0; i < controllers.length; i++) {
@@ -715,6 +965,44 @@ class _NhapMaScreenState extends State<NhapMaScreen> {
     }
     return controllers.length;
   }
+
+
+  Future<void> joinFamily() async {
+    String codeNumber = controllers.map((c) => c.text).join().trim();
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString("token");
+
+      var dio = Dio();
+      Response response = await dio.post(
+        'https://platform-family.onrender.com/family/join-family',
+        data: {"codeNumber": codeNumber},
+        options: Options(headers: {"Authorization": "Bearer $token"}),
+      );
+
+      if (response.statusCode == 200) {
+        String familyId = response.data["data"]["familyId"];
+        await prefs.setString('familyId', familyId);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Tham gia gia đình thành công!"), backgroundColor: Colors.green),
+        );
+
+        Future.delayed(Duration(seconds: 2), () {
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Homepage()));
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Mã không hợp lệ hoặc lỗi!"), backgroundColor: Colors.red),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Không thể kết nối đến máy chủ!"), backgroundColor: Colors.red),
+      );
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -734,14 +1022,15 @@ class _NhapMaScreenState extends State<NhapMaScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(
-                  6,
-                      (index) => Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: SizedBox(
-                      height: 60, // Tăng chiều cao ô nhập
-                      child: buildCodeBox(index),
-                    ),
-                  )),
+                8,
+                    (index) => Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: SizedBox(
+                    height: 60,
+                    child: buildCodeBox(index),
+                  ),
+                ),
+              ),
             ),
             SizedBox(height: 10),
             Text(
@@ -753,17 +1042,14 @@ class _NhapMaScreenState extends State<NhapMaScreen> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: controllers.every((c) => c.text.isNotEmpty)
-                    ? () {
-                  // Xử lý khi gửi mã
-                }
-                    : null, // Vô hiệu hoá nếu chưa nhập đủ
+                    ? joinFamily
+                    : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: controllers.every((c) => c.text.isNotEmpty)
                       ? Colors.blue
                       : Colors.grey[300],
                   padding: EdgeInsets.symmetric(vertical: 15),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
                 child: Text(
                   'Gửi',
@@ -779,10 +1065,7 @@ class _NhapMaScreenState extends State<NhapMaScreen> {
             SizedBox(height: 180),
             Text(
               'HOẶC',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-              ),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
             SizedBox(height: 3),
             Text('Bạn chưa có NHÓM?'),
@@ -801,15 +1084,14 @@ class _NhapMaScreenState extends State<NhapMaScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
                   padding: EdgeInsets.symmetric(vertical: 15),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
                 child: Text(
                   'Tạo vòng tròn mới',
                   style: TextStyle(color: Colors.white, fontSize: 16),
                 ),
               ),
-            )
+            ),
           ],
         ),
       ),
@@ -824,8 +1106,8 @@ class TaoNhomScreen extends StatefulWidget {
 
 class _TaoNhomScreenState extends State<TaoNhomScreen> {
   TextEditingController _controller = TextEditingController();
-  String? selectedRole;
   String? userId; // ID user động
+  bool isButtonEnabled = false; // ✅ Thêm biến này vào đây
 
   @override
   void initState() {
@@ -844,11 +1126,11 @@ class _TaoNhomScreenState extends State<TaoNhomScreen> {
   Future<void> createFamily() async {
     print("🚀 Hàm createFamily() được gọi!");
 
-    if (_controller.text.isEmpty || selectedRole == null || userId == null) {
-      print("⚠️ Thiếu dữ liệu: Tên gia đình: ${_controller.text}, Vai trò: $selectedRole, UserID: $userId");
+    if (_controller.text.isEmpty || userId == null) {
+      print("⚠️ Thiếu dữ liệu: Tên gia đình: ${_controller.text}, UserID: $userId");
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Vui lòng nhập đầy đủ thông tin trước khi tạo gia đình!")),
+        SnackBar(content: Text("Vui lòng nhập Tên Gia Đình của bạn!")),
       );
       return;
     }
@@ -867,9 +1149,11 @@ class _TaoNhomScreenState extends State<TaoNhomScreen> {
       print("📌 Phản hồi API khi tạo gia đình: ${response.data}");
 
       if ((response.statusCode == 200 || response.statusCode == 201) && response.data['ok'] == true) {
-        String familyId = response.data["data"]["_id"]; // Lấy familyId từ API
+        String familyId = response.data["data"]["_id"] ?? ""; // Kiểm tra null
+        String familyCode = response.data["data"]["codeNumber"]?.toString() ?? "UNKNOWN"; // ✅ Fix lỗi Null
 
         print("✅ Gia đình đã được tạo thành công với familyId: $familyId");
+        print("✅ Mã gia đình: $familyCode");
 
         // Lưu familyId vào SharedPreferences
         SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -884,11 +1168,13 @@ class _TaoNhomScreenState extends State<TaoNhomScreen> {
           ),
         );
 
-        // Điều hướng về trang chủ sau khi tạo gia đình thành công
+        // ✅ Điều hướng về trang ShowFamilyCodeScreen với familyCode
         Future.delayed(Duration(seconds: 2), () {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => Homepage()),
+            MaterialPageRoute(
+              builder: (context) => ShowFamilyCodeScreen(familyCode: familyCode),
+            ),
           );
         });
       } else {
@@ -916,6 +1202,8 @@ class _TaoNhomScreenState extends State<TaoNhomScreen> {
 
 
 
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -927,96 +1215,59 @@ class _TaoNhomScreenState extends State<TaoNhomScreen> {
             SizedBox(height: 20),
             Text('Đặt tên Gia đình của bạn',
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+            SizedBox(height: 20),
             TextField(
               controller: _controller,
               onChanged: (value) {
-                setState(() {}); // Cập nhật trạng thái khi nhập tên
+                setState(() {
+                  isButtonEnabled = value.trim().isNotEmpty; // ✅ Kiểm tra rỗng và cập nhật state
+                });
               },
               decoration: InputDecoration(
-                hintText: '|',
-                hintStyle: TextStyle(color: Colors.grey, fontSize: 22),
-                border: InputBorder.none,
+                hintText: 'Nhập tên gia đình...',
+                hintStyle: TextStyle(color: Colors.grey, fontSize: 18),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
-              style: TextStyle(
-                color: Colors.blue,
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18),
               textAlign: TextAlign.center,
             ),
+
+
+
             SizedBox(height: 10),
             Text('Bạn có thể thay đổi tên Gia đình trong cài đặt.',
                 textAlign: TextAlign.center, style: TextStyle(fontSize: 13)),
-            SizedBox(height: 50),
-            Text('Vai trò của bạn trong gia đình này là gì?',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            SizedBox(height: 10),
-            Column(
-              children: [
-                buildRoleButton('Ông'),
-                buildRoleButton('Bà'),
-                buildRoleButton('Ba'),
-                buildRoleButton('Mẹ'),
-                buildRoleButton('Con trai/Con gái/Con'),
-                buildRoleButton('Khác'),
-              ],
-            ),
             SizedBox(height: 10),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: _controller.text.isNotEmpty && selectedRole != null
+                onPressed: isButtonEnabled
                     ? () {
                   print("🟢 Nút 'Tiếp tục' được bấm!");
                   createFamily();
                 }
-                    : null, // Disable nếu chưa nhập tên gia đình hoặc chưa chọn vai trò
+                    : null, // ✅ Disable nếu chưa nhập tên
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _controller.text.isNotEmpty && selectedRole != null
-                      ? Colors.blue
-                      : Colors.grey[300],
+                  backgroundColor: isButtonEnabled ? Colors.blue : Colors.grey[300],
                   padding: EdgeInsets.symmetric(vertical: 15),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
                 child: Text(
                   'Tiếp tục',
                   style: TextStyle(
-                    color: _controller.text.isNotEmpty && selectedRole != null
-                        ? Colors.white
-                        : Colors.grey,
+                    color: isButtonEnabled ? Colors.white : Colors.grey,
                     fontSize: 16,
                   ),
                 ),
               ),
             ),
+
+
           ],
         ),
       ),
     );
   }
 
-  Widget buildRoleButton(String role) {
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          selectedRole = role;
-        });
-      },
-      child: Container(
-        margin: EdgeInsets.symmetric(vertical: 5),
-        padding: EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: selectedRole == role ? Colors.blue : Colors.grey[200],
-          borderRadius: BorderRadius.circular(8),
-        ),
-        width: double.infinity,
-        child: Text(
-          role,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-              color: selectedRole == role ? Colors.white : Colors.black),
-        ),
-      ),
-    );
-  }
 }

@@ -3,8 +3,30 @@
 // import 'package:nest_mobile/login.dart';
 // import 'package:shared_preferences/shared_preferences.dart';
 //
-// class SettingScreen extends StatelessWidget {
+// class SettingScreen extends StatefulWidget {
 //   const SettingScreen({super.key});
+//
+//   @override
+//   _SettingScreenState createState() => _SettingScreenState();
+// }
+//
+// class _SettingScreenState extends State<SettingScreen> {
+//   String _name = "Người dùng"; // Giá trị mặc định
+//   String _avatar = "assets/images/user_avatar.jpg"; // Ảnh mặc định nếu không có avatar
+//
+//   @override
+//   void initState() {
+//     super.initState();
+//     _loadUserData();
+//   }
+//
+//   Future<void> _loadUserData() async {
+//     final prefs = await SharedPreferences.getInstance();
+//     setState(() {
+//       _name = prefs.getString('name') ?? "Người dùng";
+//       _avatar = prefs.getString('avatar') ?? "assets/images/user_avatar.jpg";
+//     });
+//   }
 //
 //   Future<void> _logout(BuildContext context) async {
 //     final prefs = await SharedPreferences.getInstance();
@@ -31,11 +53,13 @@
 //           children: [
 //             // Thông tin tài khoản
 //             ListTile(
-//               leading: const CircleAvatar(
-//                 backgroundImage: AssetImage('assets/images/user_avatar.jpg'), // Avatar giả lập
+//               leading: CircleAvatar(
+//                 backgroundImage: _avatar.startsWith("http")
+//                     ? NetworkImage(_avatar)
+//                     : AssetImage(_avatar) as ImageProvider, // Kiểm tra ảnh từ URL hay file cục bộ
 //                 radius: 24,
 //               ),
-//               title: const Text('Con', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+//               title: Text(_name, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
 //               subtitle: const Text('Tài khoản nhỏ', style: TextStyle(color: Colors.grey)),
 //               trailing: IconButton(
 //                 icon: const Icon(Icons.swap_horiz),
@@ -63,8 +87,8 @@
 //               title: const Text('Cài đặt tài khoản'),
 //               onTap: () {
 //                 Navigator.push(
-//                     context,
-//                     MaterialPageRoute(builder: (context) => const GroupManagementScreen()),
+//                   context,
+//                   MaterialPageRoute(builder: (context) => const GroupManagementScreen()),
 //                 );
 //               },
 //             ),
@@ -134,7 +158,6 @@
 //                 ],
 //               ),
 //             ),
-//
 //           ],
 //         ),
 //       ),
@@ -146,6 +169,7 @@
 import 'package:flutter/material.dart';
 import 'package:nest_mobile/group_management.dart';
 import 'package:nest_mobile/login.dart';
+import 'package:nest_mobile/update_avatar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingScreen extends StatefulWidget {
@@ -229,14 +253,22 @@ class _SettingScreenState extends State<SettingScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.settings, color: Colors.grey),
-              title: const Text('Cài đặt tài khoản'),
-              onTap: () {
-                Navigator.push(
+              title: const Text('Cập nhật ảnh đại diện'),
+              onTap: () async {
+                String? newAvatar = await Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const GroupManagementScreen()),
+                  MaterialPageRoute(builder: (context) => UpdateAvatarScreen()),
                 );
+
+                // ✅ Nếu có avatar mới, cập nhật UI ngay lập tức
+                if (newAvatar != null) {
+                  setState(() {
+                    _avatar = newAvatar;
+                  });
+                }
               },
             ),
+
             ListTile(
               leading: const Icon(Icons.logout, color: Colors.red),
               title: const Text('Đăng xuất', style: TextStyle(color: Colors.red)),

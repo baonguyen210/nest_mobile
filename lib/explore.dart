@@ -1,8 +1,71 @@
+// import 'package:dio/dio.dart';
 // import 'package:flutter/material.dart';
+// import 'package:nest_mobile/album.dart';
+// import 'package:shared_preferences/shared_preferences.dart';
 // import 'game_detail.dart';
 //
-// class ExplorePage extends StatelessWidget {
+// class ExplorePage extends StatefulWidget {
 //   const ExplorePage({Key? key}) : super(key: key);
+//
+//   @override
+//   _ExplorePageState createState() => _ExplorePageState();
+// }
+//
+// class _ExplorePageState extends State<ExplorePage> {
+//   List<String> photos = [];
+//   bool isLoading = true;
+//   int totalPhotos = 0;
+//   double totalStorageUsed = 0; // Dung lượng đã sử dụng (MB)
+//
+//   @override
+//   void initState() {
+//     super.initState();
+//     _fetchPhotos();
+//   }
+//
+//   /// 📌 Lấy ảnh từ API
+//   Future<void> _fetchPhotos() async {
+//     try {
+//       final prefs = await SharedPreferences.getInstance();
+//       String? familyId = prefs.getString('familyId');
+//
+//       if (familyId == null) {
+//         setState(() {
+//           isLoading = false;
+//         });
+//         return;
+//       }
+//
+//       String apiUrl = 'https://platform-family.onrender.com/album/$familyId';
+//       Dio dio = Dio();
+//       Response response = await dio.get(apiUrl);
+//
+//       if (response.statusCode == 200 && response.data['ok'] == true) {
+//         List<Map<String, dynamic>> albums = List<Map<String, dynamic>>.from(response.data['data']);
+//         List<String> fetchedPhotos = [];
+//
+//         for (var album in albums) {
+//           fetchedPhotos.addAll(List<String>.from(album['photos']));
+//         }
+//
+//         setState(() {
+//           photos = fetchedPhotos;
+//           totalPhotos = fetchedPhotos.length;
+//           totalStorageUsed = totalPhotos * 5.0; // Mỗi ảnh 5MB
+//           isLoading = false;
+//         });
+//       } else {
+//         setState(() {
+//           isLoading = false;
+//         });
+//       }
+//     } catch (e) {
+//       print("Error fetching photos: $e");
+//       setState(() {
+//         isLoading = false;
+//       });
+//     }
+//   }
 //
 //   @override
 //   Widget build(BuildContext context) {
@@ -17,7 +80,7 @@
 //           crossAxisAlignment: CrossAxisAlignment.start,
 //           children: [
 //             // Album lưu trữ
-//             _buildAlbumStorage(),
+//             _buildAlbumStorage(context),
 //
 //             const SizedBox(height: 20),
 //
@@ -35,11 +98,10 @@
 //   }
 //
 //   // Widget hiển thị Album lưu trữ
-//   Widget _buildAlbumStorage() {
+//   Widget _buildAlbumStorage(BuildContext context) {
 //     return Column(
 //       crossAxisAlignment: CrossAxisAlignment.start,
 //       children: [
-//         // Tiêu đề
 //         Row(
 //           mainAxisAlignment: MainAxisAlignment.spaceBetween,
 //           children: [
@@ -47,29 +109,37 @@
 //               'Album lưu trữ',
 //               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
 //             ),
-//             const Text(
-//               'Xem tất cả',
-//               style: TextStyle(color: Colors.blue),
+//             GestureDetector(
+//               onTap: () {
+//                 Navigator.push(
+//                   context,
+//                   MaterialPageRoute(builder: (context) => const AlbumPage()), // Chuyển đến AlbumPage
+//                 );
+//               },
+//               child: const Text(
+//                 'Xem tất cả',
+//                 style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
+//               ),
 //             ),
 //           ],
 //         ),
 //
 //         const SizedBox(height: 5),
 //
-//         // Thanh dung lượng
+//         // Hiển thị dung lượng đã dùng
 //         Row(
 //           children: [
 //             const Icon(Icons.storage, color: Colors.green),
 //             const SizedBox(width: 8),
-//             const Expanded(
-//               child: Text('Đã sử dụng 12.91 GB trong tổng số 15 GB'),
+//             Expanded(
+//               child: Text('Đã sử dụng ${totalStorageUsed.toStringAsFixed(2)} MB trong tổng số 5 GB'),
 //             ),
 //           ],
 //         ),
 //
 //         const SizedBox(height: 5),
 //
-//         // Progress bar
+//         // Progress bar hiển thị phần trăm dung lượng
 //         Container(
 //           height: 5,
 //           decoration: BoxDecoration(
@@ -77,7 +147,7 @@
 //             borderRadius: BorderRadius.circular(3),
 //           ),
 //           child: FractionallySizedBox(
-//             widthFactor: 12.91 / 15, // % dung lượng đã dùng
+//             widthFactor: (totalStorageUsed / 15000).clamp(0.0, 1.0), // Tính phần trăm dựa trên 15GB
 //             child: Container(
 //               decoration: BoxDecoration(
 //                 color: Colors.orange,
@@ -89,32 +159,48 @@
 //
 //         const SizedBox(height: 10),
 //
-//         // Danh sách ảnh mẫu (Kích thước nhỏ hơn)
-//         GridView.builder(
+//         // Hiển thị ảnh từ API
+//         isLoading
+//             ? const Center(child: CircularProgressIndicator())
+//             : GridView.builder(
 //           shrinkWrap: true,
 //           physics: const NeverScrollableScrollPhysics(),
 //           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
 //             crossAxisCount: 4,
-//             crossAxisSpacing: 6,  // Giảm khoảng cách
-//             mainAxisSpacing: 6,  // Giảm khoảng cách
-//             childAspectRatio: 1.2, // Tăng tỉ lệ giúp ô nhỏ hơn
+//             crossAxisSpacing: 6,
+//             mainAxisSpacing: 6,
+//             childAspectRatio: 1.2,
 //           ),
-//           itemCount: 8, // Giữ lại 8 ô trống mẫu
+//           itemCount: photos.length > 7 ? 8 : photos.length,
 //           itemBuilder: (context, index) {
-//             return Container(
-//               decoration: BoxDecoration(
-//                 color: Colors.grey[300],
-//                 borderRadius: BorderRadius.circular(6), // Viền nhỏ hơn
+//             if (index == 7 && photos.length > 7) {
+//               return Container(
+//                 decoration: BoxDecoration(
+//                   color: Colors.grey[300],
+//                   borderRadius: BorderRadius.circular(6),
+//                 ),
+//                 child: Center(
+//                   child: Text(
+//                     '+${photos.length - 7}',
+//                     style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+//                   ),
+//                 ),
+//               );
+//             }
+//
+//             return ClipRRect(
+//               borderRadius: BorderRadius.circular(6),
+//               child: Image.network(
+//                 photos[index],
+//                 fit: BoxFit.cover,
 //               ),
-//               child: index == 7
-//                   ? const Center(child: Text('+176')) // Hiển thị số ảnh còn lại
-//                   : null,
 //             );
 //           },
 //         ),
 //       ],
 //     );
 //   }
+//
 //
 //   // Widget hiển thị danh sách trò chơi
 //   Widget _buildGameSection(BuildContext context) {
@@ -208,14 +294,15 @@
 //         const SizedBox(height: 10),
 //
 //         // Danh sách game (Kích thước nhỏ hơn)
+//         // Danh sách game (Kích thước nhỏ hơn)
 //         GridView.builder(
 //           shrinkWrap: true,
 //           physics: const NeverScrollableScrollPhysics(),
 //           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-//             crossAxisCount: 4,
+//             crossAxisCount: 4, // 4 game trên một hàng
 //             crossAxisSpacing: 6,
 //             mainAxisSpacing: 6,
-//             childAspectRatio: 1.2,
+//             childAspectRatio: 1, // Cân đối hình ảnh
 //           ),
 //           itemCount: games.length,
 //           itemBuilder: (context, index) {
@@ -226,21 +313,47 @@
 //                   games[index]["name"]!,
 //                   games[index]["image"]!,
 //                   games[index]["description"]!,
-//                   games[index]["rules"] ?? "", // Kiểm tra null tránh lỗi
-//                   (games[index]["suggested_topics"] as List<dynamic>).cast<Map<String, dynamic>>() ?? [], // Đảm bảo dữ liệu đúng kiểu
+//                   games[index]["rules"] ?? "",
+//                   (games[index]["suggested_topics"] as List<dynamic>).cast<Map<String, dynamic>>() ?? [],
 //                 );
 //               },
-//
 //               child: Container(
 //                 decoration: BoxDecoration(
 //                   color: Colors.grey[300],
 //                   borderRadius: BorderRadius.circular(6),
 //                 ),
-//                 child: Center(
-//                   child: Text(
-//                     games[index]["name"]!,
-//                     textAlign: TextAlign.center,
-//                     style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+//                 child: ClipRRect(
+//                   borderRadius: BorderRadius.circular(6),
+//                   child: Stack(
+//                     fit: StackFit.expand,
+//                     children: [
+//                       // Hình ảnh game
+//                       Image.network(
+//                         games[index]["image"]!,
+//                         fit: BoxFit.cover,
+//                       ),
+//
+//                       // Overlay mờ giúp chữ dễ đọc
+//                       Container(
+//                         decoration: BoxDecoration(
+//                           color: Colors.black.withOpacity(0.4),
+//                           borderRadius: BorderRadius.circular(6),
+//                         ),
+//                       ),
+//
+//                       // Tên game hiển thị trên ảnh
+//                       Center(
+//                         child: Text(
+//                           games[index]["name"]!,
+//                           textAlign: TextAlign.center,
+//                           style: TextStyle(
+//                             fontSize: 12,
+//                             fontWeight: FontWeight.bold,
+//                             color: Colors.white, // Chữ màu trắng để nổi bật trên ảnh
+//                           ),
+//                         ),
+//                       ),
+//                     ],
 //                   ),
 //                 ),
 //               ),
@@ -385,12 +498,74 @@
 // }
 
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:nest_mobile/album.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'game_detail.dart';
 
-class ExplorePage extends StatelessWidget {
+class ExplorePage extends StatefulWidget {
   const ExplorePage({Key? key}) : super(key: key);
+
+  @override
+  _ExplorePageState createState() => _ExplorePageState();
+}
+
+class _ExplorePageState extends State<ExplorePage> {
+  List<String> photos = [];
+  bool isLoading = true;
+  int totalPhotos = 0;
+  double totalStorageUsed = 0; // Dung lượng đã sử dụng (MB)
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchPhotos();
+  }
+
+  /// 📌 Lấy ảnh từ API
+  Future<void> _fetchPhotos() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      String? familyId = prefs.getString('familyId');
+
+      if (familyId == null) {
+        setState(() {
+          isLoading = false;
+        });
+        return;
+      }
+
+      String apiUrl = 'https://platform-family.onrender.com/album/$familyId';
+      Dio dio = Dio();
+      Response response = await dio.get(apiUrl);
+
+      if (response.statusCode == 200 && response.data['ok'] == true) {
+        List<Map<String, dynamic>> albums = List<Map<String, dynamic>>.from(response.data['data']);
+        List<String> fetchedPhotos = [];
+
+        for (var album in albums) {
+          fetchedPhotos.addAll(List<String>.from(album['photos']));
+        }
+
+        setState(() {
+          photos = fetchedPhotos;
+          totalPhotos = fetchedPhotos.length;
+          totalStorageUsed = totalPhotos * 5.0; // Mỗi ảnh 5MB
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      print("Error fetching photos: $e");
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -423,7 +598,7 @@ class ExplorePage extends StatelessWidget {
   }
 
   // Widget hiển thị Album lưu trữ
-  Widget _buildAlbumStorage(BuildContext context) { // Truyền context
+  Widget _buildAlbumStorage(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -451,20 +626,20 @@ class ExplorePage extends StatelessWidget {
 
         const SizedBox(height: 5),
 
-        // Thanh dung lượng
+        // Hiển thị dung lượng đã dùng
         Row(
           children: [
             const Icon(Icons.storage, color: Colors.green),
             const SizedBox(width: 8),
-            const Expanded(
-              child: Text('Đã sử dụng 12.91 GB trong tổng số 15 GB'),
+            Expanded(
+              child: Text('Đã sử dụng ${totalStorageUsed.toStringAsFixed(2)} MB trong tổng số 5 GB'),
             ),
           ],
         ),
 
         const SizedBox(height: 5),
 
-        // Progress bar
+        // Progress bar hiển thị phần trăm dung lượng
         Container(
           height: 5,
           decoration: BoxDecoration(
@@ -472,7 +647,7 @@ class ExplorePage extends StatelessWidget {
             borderRadius: BorderRadius.circular(3),
           ),
           child: FractionallySizedBox(
-            widthFactor: 12.91 / 15, // % dung lượng đã dùng
+            widthFactor: (totalStorageUsed / 15000).clamp(0.0, 1.0), // Tính phần trăm dựa trên 15GB
             child: Container(
               decoration: BoxDecoration(
                 color: Colors.orange,
@@ -484,32 +659,59 @@ class ExplorePage extends StatelessWidget {
 
         const SizedBox(height: 10),
 
-        // Danh sách ảnh mẫu (Kích thước nhỏ hơn)
-        GridView.builder(
+        // Hiển thị ảnh từ API
+        // Hiển thị ảnh từ API hoặc thông báo nếu không có ảnh
+        isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : photos.isEmpty
+            ? const Center(
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: 20),
+            child: Text(
+              "Bạn chưa có album lưu trữ nào.",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),
+            ),
+          ),
+        )
+            : GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 4,
-            crossAxisSpacing: 6,  // Giảm khoảng cách
-            mainAxisSpacing: 6,  // Giảm khoảng cách
-            childAspectRatio: 1.2, // Tăng tỉ lệ giúp ô nhỏ hơn
+            crossAxisSpacing: 6,
+            mainAxisSpacing: 6,
+            childAspectRatio: 1.2,
           ),
-          itemCount: 8, // Giữ lại 8 ô trống mẫu
+          itemCount: photos.length > 7 ? 8 : photos.length,
           itemBuilder: (context, index) {
-            return Container(
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(6), // Viền nhỏ hơn
+            if (index == 7 && photos.length > 7) {
+              return Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Center(
+                  child: Text(
+                    '+${photos.length - 7}',
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              );
+            }
+
+            return ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: Image.network(
+                photos[index],
+                fit: BoxFit.cover,
               ),
-              child: index == 7
-                  ? const Center(child: Text('+176')) // Hiển thị số ảnh còn lại
-                  : null,
             );
           },
         ),
       ],
     );
   }
+
 
   // Widget hiển thị danh sách trò chơi
   Widget _buildGameSection(BuildContext context) {
