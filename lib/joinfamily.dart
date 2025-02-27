@@ -1,6 +1,8 @@
 // import 'package:flutter/material.dart';
 // import 'package:nest_mobile/homepage.dart';
 // import 'package:dio/dio.dart';
+// import 'package:nest_mobile/show_family_code.dart';
+// import 'package:nest_mobile/upload_avatar.dart';
 // import 'package:shared_preferences/shared_preferences.dart';
 // import 'dart:convert';
 // import 'choose_family.dart'; // Trang mới để hiển thị gia đình có sẵn
@@ -28,6 +30,7 @@
 // class _WelcomeScreenState extends State<WelcomeScreen> {
 //   TextEditingController _nameController = TextEditingController();
 //   String? userId;
+//   bool isButtonEnabled = false; // Thêm biến này vào trong class _TaoNhomScreenState
 //   String? userName;
 //   String? token;
 //   bool isLoading = true; // Trạng thái load dữ liệu
@@ -68,23 +71,31 @@
 //         options: Options(headers: {"Authorization": "Bearer $token"}),
 //       );
 //
-//       if (response.statusCode == 200 && response.data['data'].isNotEmpty) {
-//         print("✅ Người dùng đã có gia đình, chuyển đến `ChooseFamily.dart`.");
-//         Navigator.pushReplacement(
-//           context,
-//           MaterialPageRoute(builder: (context) => ChooseFamilyScreen(families: response.data['data'])),
-//         );
+//       if (response.statusCode == 200) {
+//         var families = response.data['data'];
+//         print("📋 Danh sách gia đình: $families"); // In danh sách family ra console
+//
+//         if (families.isNotEmpty) {
+//           print("✅ Người dùng đã có gia đình, chuyển đến ChooseFamily.dart.");
+//           Navigator.pushReplacement(
+//             context,
+//             MaterialPageRoute(builder: (context) => ChooseFamilyScreen(families: families)),
+//           );
+//         } else {
+//           print("❌ Người dùng chưa có gia đình.");
+//           Navigator.pushReplacement(
+//             context,
+//             MaterialPageRoute(builder: (context) => ThamGiaGiaDinh()),
+//           );
+//         }
 //       } else {
-//         print("❌ Người dùng chưa có gia đình.");
-//         Navigator.pushReplacement(
-//           context,
-//           MaterialPageRoute(builder: (context) => ThamGiaGiaDinh()),
-//         );
+//         print("⚠️ Phản hồi không hợp lệ: ${response.statusCode}");
 //       }
 //     } catch (e) {
 //       print("🚨 Lỗi kiểm tra gia đình: $e");
 //     }
 //   }
+//
 //
 //   Future<void> _loadUserId() async {
 //     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -96,65 +107,52 @@
 //
 //   Future<void> _updateUserName() async {
 //     if (_nameController.text.isEmpty || userId == null) {
-//       print("⚠️ Lỗi: userId hoặc tên trống!");
-//       print("🔹 userId: $userId");
-//       print("🔹 name: ${_nameController.text}");
-//
 //       ScaffoldMessenger.of(context).showSnackBar(
-//         SnackBar(content: Text("Vui lòng nhập tên trước khi tiếp tục!")),
+//         SnackBar(content: Text("Vui lòng nhập tên trước khi tiếp tục!"), backgroundColor: Colors.red),
 //       );
 //       return;
 //     }
 //
 //     String apiUrl = 'https://platform-family.onrender.com/user/update-info/$userId';
-//
-//     // ✅ Đảm bảo đúng thứ tự: "avatar" trước "name"
 //     Map<String, dynamic> requestData = {
 //       "avatar": "", // Avatar trống
 //       "name": _nameController.text.trim(),
 //     };
 //
-//     print("🌐 Gửi request đến API: $apiUrl");
-//     print("📌 Dữ liệu gửi đi (chuẩn JSON): ${jsonEncode(requestData)}");
-//
 //     try {
 //       var dio = Dio();
-//       Response response = await dio.put( // ✅ Sử dụng PUT thay vì POST
-//         apiUrl,
-//         data: requestData,
-//       );
-//
-//       print("📌 Phản hồi API khi cập nhật tên: ${response.statusCode}");
-//       print("📌 Dữ liệu trả về: ${response.data}");
+//       Response response = await dio.put(apiUrl, data: requestData);
 //
 //       if (response.statusCode == 200 || response.statusCode == 201) {
-//         // Lưu tên vào SharedPreferences
 //         SharedPreferences prefs = await SharedPreferences.getInstance();
 //         await prefs.setString('name', _nameController.text.trim());
-//
-//         print("💾 Đã lưu tên vào SharedPreferences: ${_nameController.text}");
 //
 //         ScaffoldMessenger.of(context).showSnackBar(
 //           SnackBar(content: Text("Cập nhật tên thành công!"), backgroundColor: Colors.green),
 //         );
 //
 //         Future.delayed(Duration(seconds: 1), () {
-//           Navigator.pushReplacement(
-//             context,
-//             MaterialPageRoute(builder: (context) => ThamGiaGiaDinh()),
-//           );
+//           // ✅ Kiểm tra avatar trước khi điều hướng
+//           if (response.data['data']['avatar'] == "") {
+//             Navigator.pushReplacement(
+//               context,
+//               MaterialPageRoute(builder: (context) => UploadAvatarScreen()), // ✅ Chuyển đến Upload Avatar
+//             );
+//           } else {
+//             Navigator.pushReplacement(
+//               context,
+//               MaterialPageRoute(builder: (context) => ThamGiaGiaDinh()),
+//             );
+//           }
 //         });
-//       }
-//       else {
-//         print("❌ API trả về lỗi: ${response.statusCode} - ${response.data}");
+//       } else {
 //         ScaffoldMessenger.of(context).showSnackBar(
 //           SnackBar(content: Text("Cập nhật thất bại. Vui lòng thử lại!"), backgroundColor: Colors.red),
 //         );
 //       }
 //     } catch (e) {
-//       print("🚨 Lỗi khi cập nhật tên: $e");
 //       ScaffoldMessenger.of(context).showSnackBar(
-//         SnackBar(content: Text("Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng!"), backgroundColor: Colors.red),
+//         SnackBar(content: Text("Không thể kết nối đến máy chủ!"), backgroundColor: Colors.red),
 //       );
 //     }
 //   }
@@ -342,8 +340,6 @@
 //
 //   Future<void> joinFamily() async {
 //     String codeNumber = controllers.map((c) => c.text).join().trim();
-//     print("🚀 Đang gửi mã lời mời: '$codeNumber'");
-//
 //     try {
 //       SharedPreferences prefs = await SharedPreferences.getInstance();
 //       String? token = prefs.getString("token");
@@ -352,27 +348,32 @@
 //       Response response = await dio.post(
 //         'https://platform-family.onrender.com/family/join-family',
 //         data: {"codeNumber": codeNumber},
-//         options: Options(
-//           headers: {"Authorization": "Bearer $token"},
-//         ),
+//         options: Options(headers: {"Authorization": "Bearer $token"}),
 //       );
 //
 //       if (response.statusCode == 200) {
 //         String familyId = response.data["data"]["familyId"];
 //         await prefs.setString('familyId', familyId);
-//         print("✅ Family ID đã được lưu: $familyId");
 //
-//         Navigator.pushReplacement(
-//           context,
-//           MaterialPageRoute(builder: (context) => Homepage()),
+//         ScaffoldMessenger.of(context).showSnackBar(
+//           SnackBar(content: Text("Tham gia gia đình thành công!"), backgroundColor: Colors.green),
 //         );
+//
+//         Future.delayed(Duration(seconds: 2), () {
+//           Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Homepage()));
+//         });
 //       } else {
-//         print("❌ Mã không hợp lệ hoặc lỗi!");
+//         ScaffoldMessenger.of(context).showSnackBar(
+//           SnackBar(content: Text("Mã không hợp lệ hoặc lỗi!"), backgroundColor: Colors.red),
+//         );
 //       }
 //     } catch (e) {
-//       print("🚨 Lỗi khi tham gia gia đình: $e");
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         SnackBar(content: Text("Không thể kết nối đến máy chủ!"), backgroundColor: Colors.red),
+//       );
 //     }
 //   }
+//
 //
 //   @override
 //   Widget build(BuildContext context) {
@@ -477,6 +478,7 @@
 // class _TaoNhomScreenState extends State<TaoNhomScreen> {
 //   TextEditingController _controller = TextEditingController();
 //   String? userId; // ID user động
+//   bool isButtonEnabled = false; // ✅ Thêm biến này vào đây
 //
 //   @override
 //   void initState() {
@@ -499,7 +501,7 @@
 //       print("⚠️ Thiếu dữ liệu: Tên gia đình: ${_controller.text}, UserID: $userId");
 //
 //       ScaffoldMessenger.of(context).showSnackBar(
-//         SnackBar(content: Text("Vui lòng nhập đầy đủ thông tin trước khi tạo gia đình!")),
+//         SnackBar(content: Text("Vui lòng nhập Tên Gia Đình của bạn!")),
 //       );
 //       return;
 //     }
@@ -518,9 +520,11 @@
 //       print("📌 Phản hồi API khi tạo gia đình: ${response.data}");
 //
 //       if ((response.statusCode == 200 || response.statusCode == 201) && response.data['ok'] == true) {
-//         String familyId = response.data["data"]["_id"]; // Lấy familyId từ API
+//         String familyId = response.data["data"]["_id"] ?? ""; // Kiểm tra null
+//         String familyCode = response.data["data"]["codeNumber"]?.toString() ?? "UNKNOWN"; // ✅ Fix lỗi Null
 //
 //         print("✅ Gia đình đã được tạo thành công với familyId: $familyId");
+//         print("✅ Mã gia đình: $familyCode");
 //
 //         // Lưu familyId vào SharedPreferences
 //         SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -535,11 +539,13 @@
 //           ),
 //         );
 //
-//         // Điều hướng về trang chủ sau khi tạo gia đình thành công
+//         // ✅ Điều hướng về trang ShowFamilyCodeScreen với familyCode
 //         Future.delayed(Duration(seconds: 2), () {
 //           Navigator.pushReplacement(
 //             context,
-//             MaterialPageRoute(builder: (context) => Homepage()),
+//             MaterialPageRoute(
+//               builder: (context) => ShowFamilyCodeScreen(familyCode: familyCode),
+//             ),
 //           );
 //         });
 //       } else {
@@ -567,6 +573,8 @@
 //
 //
 //
+//
+//
 //   @override
 //   Widget build(BuildContext context) {
 //     return Scaffold(
@@ -578,23 +586,26 @@
 //             SizedBox(height: 20),
 //             Text('Đặt tên Gia đình của bạn',
 //                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+//             SizedBox(height: 20),
 //             TextField(
 //               controller: _controller,
 //               onChanged: (value) {
-//                 setState(() {}); // Cập nhật trạng thái khi nhập tên
+//                 setState(() {
+//                   isButtonEnabled = value.trim().isNotEmpty; // ✅ Kiểm tra rỗng và cập nhật state
+//                 });
 //               },
 //               decoration: InputDecoration(
-//                 hintText: '|',
-//                 hintStyle: TextStyle(color: Colors.grey, fontSize: 22),
-//                 border: InputBorder.none,
+//                 hintText: 'Nhập tên gia đình...',
+//                 hintStyle: TextStyle(color: Colors.grey, fontSize: 18),
+//                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+//                 contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
 //               ),
-//               style: TextStyle(
-//                 color: Colors.blue,
-//                 fontSize: 22,
-//                 fontWeight: FontWeight.bold,
-//               ),
+//               style: TextStyle(fontSize: 18),
 //               textAlign: TextAlign.center,
 //             ),
+//
+//
+//
 //             SizedBox(height: 10),
 //             Text('Bạn có thể thay đổi tên Gia đình trong cài đặt.',
 //                 textAlign: TextAlign.center, style: TextStyle(fontSize: 13)),
@@ -602,30 +613,28 @@
 //             SizedBox(
 //               width: double.infinity,
 //               child: ElevatedButton(
-//                 onPressed: _controller.text.isNotEmpty != null
+//                 onPressed: isButtonEnabled
 //                     ? () {
 //                   print("🟢 Nút 'Tiếp tục' được bấm!");
 //                   createFamily();
 //                 }
-//                     : null, // Disable nếu chưa nhập tên gia đình hoặc chưa chọn vai trò
+//                     : null, // ✅ Disable nếu chưa nhập tên
 //                 style: ElevatedButton.styleFrom(
-//                   backgroundColor: _controller.text.isNotEmpty != null
-//                       ? Colors.blue
-//                       : Colors.grey[300],
+//                   backgroundColor: isButtonEnabled ? Colors.blue : Colors.grey[300],
 //                   padding: EdgeInsets.symmetric(vertical: 15),
 //                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
 //                 ),
 //                 child: Text(
 //                   'Tiếp tục',
 //                   style: TextStyle(
-//                     color: _controller.text.isNotEmpty != null
-//                         ? Colors.white
-//                         : Colors.grey,
+//                     color: isButtonEnabled ? Colors.white : Colors.grey,
 //                     fontSize: 16,
 //                   ),
 //                 ),
 //               ),
 //             ),
+//
+//
 //           ],
 //         ),
 //       ),
@@ -633,7 +642,6 @@
 //   }
 //
 // }
-
 
 import 'package:flutter/material.dart';
 import 'package:nest_mobile/homepage.dart';
@@ -708,23 +716,31 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         options: Options(headers: {"Authorization": "Bearer $token"}),
       );
 
-      if (response.statusCode == 200 && response.data['data'].isNotEmpty) {
-        print("✅ Người dùng đã có gia đình, chuyển đến `ChooseFamily.dart`.");
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => ChooseFamilyScreen(families: response.data['data'])),
-        );
+      if (response.statusCode == 200) {
+        var families = response.data['data'];
+        print("📋 Danh sách gia đình: $families"); // In danh sách family ra console
+
+        if (families.isNotEmpty) {
+          print("✅ Người dùng đã có gia đình, chuyển đến ChooseFamily.dart.");
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => ChooseFamilyScreen(families: families)),
+          );
+        } else {
+          print("❌ Người dùng chưa có gia đình.");
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => ThamGiaGiaDinh()),
+          );
+        }
       } else {
-        print("❌ Người dùng chưa có gia đình.");
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => ThamGiaGiaDinh()),
-        );
+        print("⚠️ Phản hồi không hợp lệ: ${response.statusCode}");
       }
     } catch (e) {
       print("🚨 Lỗi kiểm tra gia đình: $e");
     }
   }
+
 
   Future<void> _loadUserId() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -1142,7 +1158,7 @@ class _TaoNhomScreenState extends State<TaoNhomScreen> {
         data: {
           "name": _controller.text,
           "admin": userId,
-          "members": [userId]
+          "members": [] // Truyền danh sách rỗng thay vì chứa userId
         },
       );
 

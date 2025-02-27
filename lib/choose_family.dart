@@ -21,10 +21,15 @@
 //     });
 //   }
 //
+//
 //   @override
 //   Widget build(BuildContext context) {
 //     return Scaffold(
-//       appBar: AppBar(automaticallyImplyLeading: false, title: Text("Chọn Gia Đình")),
+//       appBar: AppBar(
+//         automaticallyImplyLeading: false,
+//         title: Text("Chọn Gia Đình"),
+//         centerTitle: true,
+//       ),
 //       body: Padding(
 //         padding: const EdgeInsets.all(20.0),
 //         child: Column(
@@ -34,10 +39,21 @@
 //                 itemCount: families.length,
 //                 itemBuilder: (context, index) {
 //                   var family = families[index];
-//                   return ListTile(
-//                     title: Text(family['name']),
-//                     leading: Icon(Icons.family_restroom),
-//                     onTap: () => _saveFamilyId(context, family['_id']),
+//                   return Container(
+//                     margin: EdgeInsets.symmetric(vertical: 8),
+//                     padding: EdgeInsets.all(10),
+//                     decoration: BoxDecoration(
+//                       border: Border.all(color: Colors.blue, width: 1.5),
+//                       borderRadius: BorderRadius.circular(8),
+//                     ),
+//                     child: ListTile(
+//                       title: Text(
+//                         family['name'],
+//                         style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+//                       ),
+//                       leading: Icon(Icons.family_restroom, color: Colors.blue),
+//                       onTap: () => _saveFamilyId(context, family['_id']),
+//                     ),
 //                   );
 //                 },
 //               ),
@@ -46,7 +62,7 @@
 //               onPressed: () {
 //                 Navigator.push(context, MaterialPageRoute(builder: (context) => NhapMaScreen()));
 //               },
-//               child: Text("Nhập mã để tham gia gia đình khác"),
+//               child: Text("Nhập mã để tham gia gia đình khác", style: TextStyle(fontSize: 16)),
 //             ),
 //           ],
 //         ),
@@ -54,6 +70,7 @@
 //     );
 //   }
 // }
+
 
 import 'package:flutter/material.dart';
 import 'package:nest_mobile/joinfamily.dart';
@@ -77,6 +94,7 @@ class ChooseFamilyScreen extends StatelessWidget {
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Homepage()));
     });
   }
+
 
   @override
   Widget build(BuildContext context) {

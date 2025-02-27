@@ -498,6 +498,8 @@
 // }
 
 
+import 'dart:ui';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:nest_mobile/album.dart';
@@ -521,6 +523,46 @@ class _ExplorePageState extends State<ExplorePage> {
   void initState() {
     super.initState();
     _fetchPhotos();
+  }
+
+  void _showFullImage(BuildContext context, String imageUrl) {
+    showDialog(
+      context: context,
+      barrierDismissible: true, // ✅ Cho phép đóng khi nhấn ra ngoài
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent, // ✅ Không có viền trắng
+          child: Stack(
+            children: [
+              // ✅ Lớp nền làm mờ
+              BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10), // ✅ Hiệu ứng blur nền sau
+                child: Container(
+                  color: Colors.grey.withOpacity(0), // ✅ Nền xám nhẹ với độ trong suốt
+                ),
+              ),
+
+              // ✅ Hiển thị ảnh (có thể zoom)
+              Center(
+                child: InteractiveViewer(
+                  child: Image.network(imageUrl, fit: BoxFit.contain),
+                ),
+              ),
+
+              // ✅ Nút "X" để đóng
+              Positioned(
+                top: 10,
+                right: 10,
+                child: IconButton(
+                  icon: Icon(Icons.close, color: Colors.white, size: 30),
+                  onPressed: () => Navigator.pop(context), // ✅ Đóng modal
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   /// 📌 Lấy ảnh từ API
@@ -699,11 +741,14 @@ class _ExplorePageState extends State<ExplorePage> {
               );
             }
 
-            return ClipRRect(
-              borderRadius: BorderRadius.circular(6),
-              child: Image.network(
-                photos[index],
-                fit: BoxFit.cover,
+            return GestureDetector(
+              onTap: () => _showFullImage(context, photos[index]), // ✅ Thêm chức năng zoom ảnh
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: Image.network(
+                  photos[index],
+                  fit: BoxFit.cover,
+                ),
               ),
             );
           },

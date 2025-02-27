@@ -1,4 +1,5 @@
 // import 'dart:io';
+// import 'dart:ui';
 //
 // import 'package:dio/dio.dart';
 // import 'package:flutter/material.dart';
@@ -91,7 +92,7 @@
 // class _HomeScreenState extends State<HomeScreen> {
 //   List<Map<String, dynamic>> _posts = [];
 //   Map<String, Map<String, String>> _familyMembers = {}; // Lưu ID -> name, avatar
-//   Map<String, String> _userNames = {}; // Lưu ID -> name từ API Get all User
+//   Map<String, Map<String, String>> _userNames = {}; // ✅ Lưu cả name & avatar
 //   String _userName = "Người dùng";
 //   String _avatarUrl = "assets/images/user_avatar.jpg";
 //   String _familyCode = "Đang tải..."; // Mặc định khi chưa có mã
@@ -117,12 +118,12 @@
 //   @override
 //   void initState() {
 //     super.initState();
-//     _fetchFamilyData();
+//     _fetchPublicPosts();
+//     _fetchFamilyPosts(); // ✅ Đảm bảo luôn tải mã gia đình và bài viết khi mở Trang chủ
+//     _fetchAllUsers(); // ✅ Gọi API lấy danh sách user
 //     _loadUserInfo();
 //     _fetchEventCount();
-//     _fetchFamilyPosts(); // ✅ Đảm bảo luôn tải mã gia đình và bài viết khi mở Trang chủ
-//     _fetchPublicPosts();
-//     _fetchAllUsers(); // ✅ Gọi API lấy danh sách user
+//     _fetchFamilyData();
 //   }
 //
 //
@@ -135,15 +136,21 @@
 //       Response response = await dio.get(url);
 //
 //       if (response.statusCode == 200 && response.data["ok"] == true) {
-//         Map<String, String> userMap = {};
+//         Map<String, Map<String, String>> userMap = {}; // ✅ Thay đổi: Lưu cả avatar
 //
 //         for (var user in response.data["data"]) {
-//           userMap[user["_id"]] = user["name"] ?? "Người dùng NEST";
+//           userMap[user["_id"]] = {
+//             "name": user["name"] ?? "Người dùng NEST",
+//             "avatar": (user["avatar"] != null && user["avatar"]!.isNotEmpty)
+//                 ? user["avatar"]  // ✅ Dùng avatar từ API
+//                 : "assets/images/user_avatar.jpg" // ✅ Nếu không có, dùng avatar mặc định
+//           };
 //         }
 //
 //         setState(() {
-//           _userNames = userMap;
+//           _userNames = userMap; // ✅ Gán kiểu đúng
 //         });
+//
 //
 //         print("✅ Đã tải danh sách user thành công!");
 //       } else {
@@ -153,6 +160,7 @@
 //       print("❌ Lỗi kết nối API Get all User: $e");
 //     }
 //   }
+//
 //
 //   /// **Lấy name & avatar từ SharedPreferences**
 //   Future<void> _loadUserInfo() async {
@@ -307,10 +315,6 @@
 //                   style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20),
 //                 ),
 //               ),
-//               SizedBox(width: 12),
-//
-//               // Nút thông báo (màu xám, không có viền)
-//               Icon(Icons.notifications, color: Colors.grey, size: 30),
 //               SizedBox(width: 12),
 //
 //               // Nút chuyển đổi tài khoản (chỉ icon, không viền xanh)
@@ -631,9 +635,9 @@
 //                               setState(() {
 //                                 _familyCode = "Đang tải...";
 //                               });
-//
-//                               _fetchFamilyPosts(); // ✅ Tải bài viết trong gia đình
 //                               _fetchPublicPosts(); // ✅ Tải bài viết công khai
+//                               _fetchFamilyPosts(); // ✅ Tải bài viết trong gia đình
+//
 //                             },
 //
 //                           ),
@@ -673,8 +677,12 @@
 //       itemBuilder: (context, index) {
 //         final post = _posts[index];
 //         String authorId = post["author"] ?? "unknown";
-//         String authorName = _userNames[authorId] ?? _familyMembers[authorId]?["name"] ?? "Người dùng NEST";
-//         String authorAvatar = _familyMembers[authorId]?["avatar"] ?? "assets/images/user_avatar.jpg";
+//
+//         // ✅ Cập nhật: Lấy avatar từ _userNames trước, nếu không có thì dùng _familyMembers
+//         String authorName = _userNames[authorId] != null ? _userNames[authorId]!["name"] ?? "Người dùng NEST" : _familyMembers[authorId]?["name"] ?? "Người dùng NEST";
+//
+//         String authorAvatar = _userNames[authorId] != null ? _userNames[authorId]!["avatar"] ?? "assets/images/user_avatar.jpg" : _familyMembers[authorId]?["avatar"] ?? "assets/images/user_avatar.jpg";
+//
 //
 //         // ✅ Xử lý null an toàn
 //         String formattedTime = formatTime(post["createdAt"] ?? DateTime.now().toIso8601String());
@@ -699,7 +707,9 @@
 //         Row(
 //           children: [
 //             CircleAvatar(
-//               backgroundImage: avatar.startsWith("http") ? NetworkImage(avatar) : AssetImage(avatar) as ImageProvider,
+//               backgroundImage: avatar.isNotEmpty
+//                   ? NetworkImage(avatar) // ✅ Sử dụng avatar từ API nếu có
+//                   : AssetImage("assets/images/user_avatar.jpg") as ImageProvider, // ✅ Nếu không có, dùng avatar mặc định
 //             ),
 //             SizedBox(width: 10),
 //             Text(user, style: TextStyle(fontWeight: FontWeight.bold)),
@@ -716,13 +726,22 @@
 //           Wrap(
 //             spacing: 8,
 //             runSpacing: 8,
-//             children: images
-//                 .map((img) => ClipRRect(
-//               borderRadius: BorderRadius.circular(10),
-//               child: Image.network(img, width: 100, height: 100, fit: BoxFit.cover),
-//             ))
-//                 .toList(),
+//             children: images.map((img) {
+//               return Builder(
+//                 builder: (BuildContext ctx) { // ✅ Sử dụng Builder để có context
+//                   return GestureDetector(
+//                     onTap: () => _showFullImage(ctx, img), // ✅ Truyền context đúng cách
+//                     child: ClipRRect(
+//                       borderRadius: BorderRadius.circular(10),
+//                       child: Image.network(img, width: 100, height: 100, fit: BoxFit.cover),
+//                     ),
+//                   );
+//                 },
+//               );
+//             }).toList(),
 //           ),
+//
+//
 //
 //         SizedBox(height: 5),
 //         Row(
@@ -737,6 +756,46 @@
 //         ),
 //       ],
 //     ),
+//   );
+// }
+//
+// void _showFullImage(BuildContext context, String imageUrl) {
+//   showDialog(
+//     context: context,
+//     barrierDismissible: true, // ✅ Cho phép đóng khi nhấn ra ngoài
+//     builder: (context) {
+//       return Dialog(
+//         backgroundColor: Colors.transparent, // ✅ Đảm bảo không có viền trắng
+//         child: Stack(
+//           children: [
+//             // ✅ Lớp nền làm mờ
+//             BackdropFilter(
+//               filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10), // ✅ Hiệu ứng mờ
+//               child: Container(
+//                 color: Colors.grey.withOpacity(0), // ✅ Nền xám nhẹ với độ trong suốt
+//               ),
+//             ),
+//
+//             // ✅ Hiển thị ảnh
+//             Center(
+//               child: InteractiveViewer(
+//                 child: Image.network(imageUrl, fit: BoxFit.contain),
+//               ),
+//             ),
+//
+//             // ✅ Nút "X" để đóng
+//             Positioned(
+//               top: 10,
+//               right: 10,
+//               child: IconButton(
+//                 icon: Icon(Icons.close, color: Colors.white, size: 30),
+//                 onPressed: () => Navigator.pop(context), // ✅ Đóng modal
+//               ),
+//             ),
+//           ],
+//         ),
+//       );
+//     },
 //   );
 // }
 //
@@ -1020,6 +1079,7 @@
 // }
 
 import 'dart:io';
+import 'dart:ui';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -1746,13 +1806,22 @@ Widget _buildPost(String user, String content, String avatar, List<dynamic> imag
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: images
-                .map((img) => ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: Image.network(img, width: 100, height: 100, fit: BoxFit.cover),
-            ))
-                .toList(),
+            children: images.map((img) {
+              return Builder(
+                builder: (BuildContext ctx) { // ✅ Sử dụng Builder để có context
+                  return GestureDetector(
+                    onTap: () => _showFullImage(ctx, img), // ✅ Truyền context đúng cách
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Image.network(img, width: 100, height: 100, fit: BoxFit.cover),
+                    ),
+                  );
+                },
+              );
+            }).toList(),
           ),
+
+
 
         SizedBox(height: 5),
         Row(
@@ -1767,6 +1836,46 @@ Widget _buildPost(String user, String content, String avatar, List<dynamic> imag
         ),
       ],
     ),
+  );
+}
+
+void _showFullImage(BuildContext context, String imageUrl) {
+  showDialog(
+    context: context,
+    barrierDismissible: true, // ✅ Cho phép đóng khi nhấn ra ngoài
+    builder: (context) {
+      return Dialog(
+        backgroundColor: Colors.transparent, // ✅ Đảm bảo không có viền trắng
+        child: Stack(
+          children: [
+            // ✅ Lớp nền làm mờ
+            BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10), // ✅ Hiệu ứng mờ
+              child: Container(
+                color: Colors.grey.withOpacity(0), // ✅ Nền xám nhẹ với độ trong suốt
+              ),
+            ),
+
+            // ✅ Hiển thị ảnh
+            Center(
+              child: InteractiveViewer(
+                child: Image.network(imageUrl, fit: BoxFit.contain),
+              ),
+            ),
+
+            // ✅ Nút "X" để đóng
+            Positioned(
+              top: 10,
+              right: 10,
+              child: IconButton(
+                icon: Icon(Icons.close, color: Colors.white, size: 30),
+                onPressed: () => Navigator.pop(context), // ✅ Đóng modal
+              ),
+            ),
+          ],
+        ),
+      );
+    },
   );
 }
 
@@ -1814,12 +1923,9 @@ void _showCreatePostModal(BuildContext context, String avatarUrl, String userNam
   }
 
   Future<void> _createPost(String content) async {
-    if (content.trim().isEmpty && _selectedImages.isEmpty) { // ✅ Kiểm tra bài viết có nội dung hoặc ảnh
+    if (content.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Vui lòng nhập ít nhất 1 ký tự hoặc chọn ảnh!"),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text("Vui lòng nhập nội dung bài viết"), backgroundColor: Colors.red),
       );
       return;
     }
@@ -1830,43 +1936,79 @@ void _showCreatePostModal(BuildContext context, String avatarUrl, String userNam
       final String? familyId = prefs.getString('familyId');
 
       if (author == null || familyId == null || familyId.isEmpty) {
-        print("❌ Lỗi: Không tìm thấy userId hoặc familyId!");
+        print("❌ Lỗi: Không tìm thấy thông tin userId hoặc familyId!");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Lỗi: Không tìm thấy thông tin người dùng"), backgroundColor: Colors.red),
+        );
         return;
       }
 
-      List<String> uploadedImageUrls = await _uploadImages(_selectedImages);
-
+      // ✅ Gọi API lấy danh sách thành viên để kiểm tra quyền admin
+      bool isPrivate = true; // Mặc định là private
       Dio dio = Dio();
+      String memberUrl = "https://platform-family.onrender.com/family/get-members/$familyId";
+
+      Response memberResponse = await dio.get(memberUrl);
+      if (memberResponse.statusCode == 200 && memberResponse.data["ok"] == true) {
+        String adminId = memberResponse.data["data"]["admin"]["_id"];
+        if (author == adminId) {
+          isPrivate = false; // Nếu userId hiện tại là admin thì isPrivate = false
+        }
+      } else {
+        print("⚠️ Lỗi khi lấy danh sách thành viên: ${memberResponse.data["message"]}");
+      }
+
+      print("🚀 Gửi request tạo bài viết... isPrivate: $isPrivate");
+
       final response = await dio.post(
         'https://platform-family.onrender.com/post/create',
         data: {
           "author": author,
           "familyId": familyId,
           "content": content,
-          "images": uploadedImageUrls,
+          "isPrivate": isPrivate, // ✅ Thêm giá trị isPrivate vào API
         },
         options: Options(headers: {'Content-Type': 'application/json'}),
       );
 
+      print("📩 API Response Status Code: ${response.statusCode}");
+      print("📩 API Response Data: ${response.data}");
+
       if (response.statusCode == 200 && response.data["statusCode"] == 201) {
         print("✅ Bài viết đã được tạo thành công!");
 
-        // ✅ Hiển thị thông báo "Đăng bài thành công"
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("Đăng bài thành công!"),
+            content: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: 10),
+                Text("Bài viết đã được đăng thành công!"),
+              ],
+            ),
             backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
         );
 
         Navigator.pop(context);
       } else {
         print("❌ Lỗi đăng bài: ${response.data["message"] ?? "Không có thông báo lỗi"}");
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Lỗi đăng bài: ${response.data["message"] ?? "Không có thông báo lỗi"}"), backgroundColor: Colors.red),
+        );
       }
     } catch (e) {
       print("🚨 Lỗi kết nối API: $e");
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Lỗi kết nối: $e"), backgroundColor: Colors.red),
+      );
     }
   }
+
 
 
 

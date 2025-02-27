@@ -36,42 +36,75 @@
 //       builder: (context) {
 //         return StatefulBuilder(builder: (context, setState) {
 //           return AlertDialog(
-//             title: const Text("Tạo Album Mới"),
-//             content: Column(
-//               mainAxisSize: MainAxisSize.min,
-//               children: [
-//                 TextField(
-//                   controller: titleController,
-//                   decoration: const InputDecoration(labelText: "Tên Album"),
-//                 ),
-//                 TextField(
-//                   controller: descriptionController,
-//                   decoration: const InputDecoration(labelText: "Mô tả"),
-//                 ),
-//                 const SizedBox(height: 10),
-//                 Wrap(
-//                   spacing: 5,
-//                   children: newPhotos
-//                       .map((file) => Image.file(file, width: 50, height: 50))
-//                       .toList(),
-//                 ),
-//                 TextButton(
-//                   onPressed: () async {
-//                     List<File> selectedFiles = await _pickImages();
-//                     setState(() {
-//                       newPhotos.addAll(selectedFiles);
-//                     });
-//                   },
-//                   child: const Text("Chọn Ảnh"),
-//                 ),
-//               ],
+//             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+//             title: const Text("Tạo Album", textAlign: TextAlign.center),
+//             content: SingleChildScrollView(
+//               child: Column(
+//                 mainAxisSize: MainAxisSize.min,
+//                 children: [
+//                   // Nhập tên album
+//                   TextField(
+//                     controller: titleController,
+//                     decoration: InputDecoration(
+//                       labelText: "Tên Album",
+//                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+//                     ),
+//                   ),
+//                   const SizedBox(height: 10),
+//
+//                   // Nhập mô tả album
+//                   TextField(
+//                     controller: descriptionController,
+//                     decoration: InputDecoration(
+//                       labelText: "Mô tả Album",
+//                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+//                     ),
+//                   ),
+//                   const SizedBox(height: 10),
+//
+//                   // Hiển thị ảnh đã chọn với nền xám đồng đều
+//                   Wrap(
+//                     spacing: 8,
+//                     children: newPhotos.map((file) {
+//                       return Container(
+//                         width: 60,
+//                         height: 60,
+//                         decoration: BoxDecoration(
+//                           color: Colors.grey[300], // Màu xám nền đồng đều
+//                           borderRadius: BorderRadius.circular(8),
+//                         ),
+//                         child: ClipRRect(
+//                           borderRadius: BorderRadius.circular(8),
+//                           child: Image.file(file, width: 60, height: 60, fit: BoxFit.cover),
+//                         ),
+//                       );
+//                     }).toList(),
+//                   ),
+//                   const SizedBox(height: 10),
+//
+//                   // Nút chọn ảnh
+//                   ElevatedButton.icon(
+//                     onPressed: () async {
+//                       List<File> selectedFiles = await _pickImages();
+//                       setState(() {
+//                         newPhotos.addAll(selectedFiles);
+//                       });
+//                     },
+//                     icon: Icon(Icons.image),
+//                     label: Text("Thêm ảnh"),
+//                     style: ElevatedButton.styleFrom(
+//                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+//                     ),
+//                   ),
+//                 ],
+//               ),
 //             ),
 //             actions: [
 //               TextButton(
 //                 onPressed: () => Navigator.pop(context),
-//                 child: const Text("Hủy"),
+//                 child: const Text("Hủy", style: TextStyle(color: Colors.red)),
 //               ),
-//               TextButton(
+//               ElevatedButton(
 //                 onPressed: () async {
 //                   if (titleController.text.isNotEmpty && newPhotos.isNotEmpty) {
 //                     List<String> uploadedUrls = await _uploadImages(newPhotos);
@@ -79,7 +112,8 @@
 //                     Navigator.pop(context);
 //                   }
 //                 },
-//                 child: const Text("Tạo"),
+//                 style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+//                 child: const Text("Tạo Album", style: TextStyle(color: Colors.white)),
 //               ),
 //             ],
 //           );
@@ -87,6 +121,11 @@
 //       },
 //     );
 //   }
+//
+//
+//
+//
+//
 //
 //   Future<List<String>> _uploadImages(List<File> images) async {
 //     List<String> uploadedUrls = [];
@@ -167,13 +206,37 @@
 //       if (response.statusCode == 201 && response.data["ok"] == true) {
 //         print("✅ Album tạo thành công!");
 //         _fetchAlbums(); // Reload danh sách album sau khi tạo
+//
+//         // 🎉 Hiển thị thông báo SnackBar
+//         ScaffoldMessenger.of(context).showSnackBar(
+//           const SnackBar(
+//             content: Text("🎉 Album đã được tạo thành công!"),
+//             backgroundColor: Colors.green,
+//           ),
+//         );
 //       } else {
-//         print("❌ Lỗi tạo album: ${response.data['message']}");  // ✅ Đã sửa lỗi
+//         print("❌ Lỗi tạo album: ${response.data['message']}");
+//
+//         // ❌ Hiển thị lỗi nếu có vấn đề
+//         ScaffoldMessenger.of(context).showSnackBar(
+//           SnackBar(
+//             content: Text("❌ Lỗi tạo album: ${response.data['message']}"),
+//             backgroundColor: Colors.red,
+//           ),
+//         );
 //       }
 //     } catch (e) {
 //       print("🚨 Lỗi khi gọi API tạo album: $e");
+//
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         const SnackBar(
+//           content: Text("🚨 Đã xảy ra lỗi, vui lòng thử lại!"),
+//           backgroundColor: Colors.red,
+//         ),
+//       );
 //     }
 //   }
+//
 //
 //
 //   /// 📌 Lấy danh sách album từ API
@@ -248,10 +311,6 @@
 //           IconButton(
 //             icon: const Icon(Icons.add), // 🆕 Nút thêm album
 //             onPressed: () => _showCreateAlbumDialog(),
-//           ),
-//           IconButton(
-//             icon: const Icon(Icons.cloud_download),
-//             onPressed: _fetchAlbums,
 //           ),
 //         ],
 //       ),
@@ -352,8 +411,8 @@
 //   }
 // }
 
-
 import 'dart:io';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
@@ -592,6 +651,45 @@ class _AlbumPageState extends State<AlbumPage> {
     }
   }
 
+  void _showFullImage(BuildContext context, String imageUrl) {
+    showDialog(
+      context: context,
+      barrierDismissible: true, // ✅ Cho phép đóng khi nhấn ra ngoài
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent, // ✅ Không có viền trắng
+          child: Stack(
+            children: [
+              // ✅ Lớp nền làm mờ
+              BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10), // ✅ Hiệu ứng blur nền sau
+                child: Container(
+                  color: Colors.grey.withOpacity(0), // ✅ Nền xám nhẹ với độ trong suốt
+                ),
+              ),
+
+              // ✅ Hiển thị ảnh (có thể zoom)
+              Center(
+                child: InteractiveViewer(
+                  child: Image.network(imageUrl, fit: BoxFit.contain),
+                ),
+              ),
+
+              // ✅ Nút "X" để đóng
+              Positioned(
+                top: 10,
+                right: 10,
+                child: IconButton(
+                  icon: Icon(Icons.close, color: Colors.white, size: 30),
+                  onPressed: () => Navigator.pop(context), // ✅ Đóng modal
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
 
   /// 📌 Lấy danh sách album từ API
@@ -749,11 +847,14 @@ class _AlbumPageState extends State<AlbumPage> {
                 ),
                 itemCount: filteredPhotos.length,
                 itemBuilder: (context, index) {
-                  return ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.network(
-                      filteredPhotos[index],
-                      fit: BoxFit.cover,
+                  return GestureDetector(
+                    onTap: () => _showFullImage(context, filteredPhotos[index]), // ✅ Thêm chức năng zoom ảnh
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        filteredPhotos[index],
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   );
                 },

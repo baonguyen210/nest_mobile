@@ -27,7 +27,7 @@
 //   bool isLogin = true;
 //   String email = "";
 //   String password = "";
-//   String name = "None";
+//   String name = "";
 //
 //   Future<void> login() async {
 //     try {
@@ -82,16 +82,37 @@
 //           "password": password
 //         },
 //       );
-//       print(response.data);
-//       if (response.statusCode == 200) {
+//
+//       if (response.statusCode == 200 && response.data['ok'] == true) {
 //         setState(() {
 //           isLogin = true;
 //         });
+//
+//         // ✅ Hiển thị thông báo đăng ký thành công
+//         ScaffoldMessenger.of(context).showSnackBar(
+//           SnackBar(
+//             content: Text("Đăng ký tài khoản thành công!"),
+//             backgroundColor: Colors.green,
+//           ),
+//         );
+//       } else {
+//         ScaffoldMessenger.of(context).showSnackBar(
+//           SnackBar(
+//             content: Text("Đăng ký thất bại. Vui lòng thử lại!"),
+//             backgroundColor: Colors.red,
+//           ),
+//         );
 //       }
 //     } catch (e) {
-//       print("Đăng ký thất bại: $e");
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         SnackBar(
+//           content: Text("Lỗi kết nối máy chủ! Vui lòng kiểm tra lại."),
+//           backgroundColor: Colors.red,
+//         ),
+//       );
 //     }
 //   }
+//
 //
 //   @override
 //   Widget build(BuildContext context) {
@@ -101,11 +122,9 @@
 //         child: Column(
 //           mainAxisAlignment: MainAxisAlignment.center,
 //           children: [
-//             SizedBox(height: 20),
-//             Image.asset('assets/images/AE.png', height: 200, width: 200, fit: BoxFit.contain),
-//             SizedBox(height: 0),
-//             Text('MXH DÀNH CHO GIA ĐÌNH', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-//             SizedBox(height: 10),
+//             SizedBox(height: 100),
+//             Image.asset('assets/images/logo.png', height: 100, width: 100, fit: BoxFit.contain),
+//             SizedBox(height: 70),
 //             Container(
 //               decoration: BoxDecoration(
 //                 color: Colors.grey[200],
@@ -161,8 +180,7 @@
 //             Row(
 //               mainAxisAlignment: MainAxisAlignment.center,
 //               children: [
-//                 IconButton(onPressed: () {}, icon: Image.asset('assets/images/Google.png', height: 35, width: 40)),
-//                 IconButton(onPressed: () {}, icon: Image.asset('assets/images/Facebook.png', height: 35, width: 40)),
+//                 IconButton(onPressed: () {}, icon: Image.asset('assets/images/Google.png', height: 32, width: 30)),
 //               ],
 //             ),
 //           ],
@@ -185,33 +203,35 @@
 //             password = value;
 //           }),
 //           obscureText: true,
-//           decoration: InputDecoration(labelText: 'Mật khẩu', suffixIcon: Icon(Icons.visibility)),
+//           decoration: InputDecoration(labelText: 'Mật khẩu'),
 //         ),
-//         Row(
-//           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//           children: [
-//             Row(
-//               children: [
-//                 Checkbox(value: false, onChanged: (value) {}),
-//                 Text('Ghi nhớ tôi')
-//               ],
-//             ),
-//             TextButton(onPressed: () {}, child: Text('Quên mật khẩu?')),
-//           ],
-//         ),
-//         SizedBox(height: 10),
+//         SizedBox(height: 12),
 //         SizedBox(
 //           width: double.infinity,
 //           child: ElevatedButton(
 //             onPressed: login,
 //             style: ElevatedButton.styleFrom(
 //               backgroundColor: Colors.blue,
-//               padding: EdgeInsets.symmetric(vertical: 15),
-//               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+//               padding: EdgeInsets.symmetric(vertical: 10),
+//               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
 //             ),
-//             child: Text('Đăng nhập', style: TextStyle(color: Colors.white, fontSize: 16)),
+//             child: Text('Đăng nhập', style: TextStyle(color: Colors.white, fontSize: 15)),
 //           ),
 //         ),
+//         Row(
+//           mainAxisAlignment: MainAxisAlignment.center, // Căn giữa theo chiều ngang
+//           children: [
+//             TextButton(
+//               onPressed: () {},
+//               child: Text(
+//                 'Bạn quên mật khẩu ư?',
+//                 style: TextStyle(color: Colors.blueAccent),
+//                 textAlign: TextAlign.center,
+//               ),
+//             ),
+//           ],
+//         ),
+//
 //       ],
 //     );
 //   }
@@ -323,6 +343,12 @@ class _AuthScreenState extends State<AuthScreen> {
       }
     } catch (e) {
       print("Đăng nhập thất bại: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Đăng nhập thất bại. Vui lòng thử lại!"),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -362,7 +388,7 @@ class _AuthScreenState extends State<AuthScreen> {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Lỗi kết nối máy chủ! Vui lòng kiểm tra lại."),
+          content: Text("Đăng ký thất bại. Vui lòng thử lại!"),
           backgroundColor: Colors.red,
         ),
       );
@@ -378,15 +404,15 @@ class _AuthScreenState extends State<AuthScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            SizedBox(height: 20),
-            Image.asset('assets/images/AE.png', height: 200, width: 200, fit: BoxFit.contain),
-            SizedBox(height: 0),
-            Text('MXH DÀNH CHO GIA ĐÌNH', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            SizedBox(height: 10),
+            SizedBox(height: 50),
+            Image.asset('assets/images/NEST BG.png', height: 150, width: 150, fit: BoxFit.contain),
+            SizedBox(height: 40),
             Container(
+
               decoration: BoxDecoration(
                 color: Colors.grey[200],
                 borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey.shade300, width: 1),
               ),
               child: Row(
                 children: [
@@ -430,16 +456,15 @@ class _AuthScreenState extends State<AuthScreen> {
                 ],
               ),
             ),
-            SizedBox(height: 5),
+            SizedBox(height: 20),
             isLogin ? buildLoginForm() : buildRegisterForm(),
             Spacer(),
-            SizedBox(height: 10),
+            SizedBox(height: 25),
             Text('Hoặc', style: TextStyle(color: Colors.grey)),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                IconButton(onPressed: () {}, icon: Image.asset('assets/images/Google.png', height: 35, width: 40)),
-                IconButton(onPressed: () {}, icon: Image.asset('assets/images/Facebook.png', height: 35, width: 40)),
+                IconButton(onPressed: () {}, icon: Image.asset('assets/images/Google.png', height: 32, width: 30)),
               ],
             ),
           ],
@@ -452,43 +477,68 @@ class _AuthScreenState extends State<AuthScreen> {
     return Column(
       children: [
         TextField(
-          decoration: InputDecoration(labelText: 'Tài khoản/Email'),
+          decoration: InputDecoration(labelText: 'Tài khoản/Email', labelStyle: TextStyle(color: Colors.grey),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(17),
+              borderSide: BorderSide(color: Colors.grey.shade50, width: 0.5),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(17),
+              borderSide: BorderSide(color: Colors.grey.shade700, width: 1.7), // ✅ Viền xám đậm hơn khi focus
+            ),
+            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10), // ✅ Giảm chiều cao
+          ),
+          style: TextStyle(fontSize: 14), // ✅ Giảm font size một chút để phù hợp hơn
           onChanged: (value) => setState(() {
             email = value;
           }),
         ),
+        SizedBox(height: 12),
         TextField(
           onChanged: (value) => setState(() {
             password = value;
           }),
           obscureText: true,
-          decoration: InputDecoration(labelText: 'Mật khẩu', suffixIcon: Icon(Icons.visibility)),
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                Checkbox(value: false, onChanged: (value) {}),
-                Text('Ghi nhớ tôi')
-              ],
+          decoration: InputDecoration(labelText: 'Mật khẩu', labelStyle: TextStyle(color: Colors.grey),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(17),
+              borderSide: BorderSide(color: Colors.grey.shade50, width: 0.5),
             ),
-            TextButton(onPressed: () {}, child: Text('Quên mật khẩu?')),
-          ],
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(17),
+              borderSide: BorderSide(color: Colors.grey.shade700, width: 1.7), // ✅ Viền xám đậm hơn khi focus
+            ),
+            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10), // ✅ Giảm chiều cao
+          ),
+          style: TextStyle(fontSize: 14), // ✅ Giảm font size một chút để phù hợp hơn
         ),
-        SizedBox(height: 10),
+        SizedBox(height: 12),
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
             onPressed: login,
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
-              padding: EdgeInsets.symmetric(vertical: 15),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              backgroundColor: Color(0xFF0064E0), // ✅ Màu #0064E0
+              padding: EdgeInsets.symmetric(vertical: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
             ),
-            child: Text('Đăng nhập', style: TextStyle(color: Colors.white, fontSize: 16)),
+            child: Text('Đăng nhập', style: TextStyle(color: Colors.white, fontSize: 15)),
           ),
         ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center, // Căn giữa theo chiều ngang
+          children: [
+            TextButton(
+              onPressed: () {},
+              child: Text(
+                'Bạn quên mật khẩu ư?',
+                style: TextStyle(color: Colors.grey.shade600),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ],
+        ),
+
       ],
     );
   }
@@ -497,33 +547,68 @@ class _AuthScreenState extends State<AuthScreen> {
     return Column(
       children: [
         TextField(
-          decoration: InputDecoration(labelText: 'Tài khoản/Email'),
+          decoration: InputDecoration(labelText: 'Tài khoản/Email', labelStyle: TextStyle(color: Colors.grey),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(17),
+              borderSide: BorderSide(color: Colors.grey.shade50, width: 0.5),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(17),
+              borderSide: BorderSide(color: Colors.grey.shade700, width: 1.7), // ✅ Viền xám đậm hơn khi focus
+            ),
+            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10), // ✅ Giảm chiều cao
+          ),
+          style: TextStyle(fontSize: 14), // ✅ Giảm font size một chút để phù hợp hơn
           onChanged: (value) => setState(() {
             email = value;
           }),
         ),
+        SizedBox(height: 12),
         TextField(
           obscureText: true,
-          decoration: InputDecoration(labelText: 'Mật khẩu', suffixIcon: Icon(Icons.visibility)),
+          decoration: InputDecoration(labelText: 'Mật khẩu', labelStyle: TextStyle(color: Colors.grey),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(17),
+              borderSide: BorderSide(color: Colors.grey.shade50, width: 0.5),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(17),
+              borderSide: BorderSide(color: Colors.grey.shade700, width: 1.7), // ✅ Viền xám đậm hơn khi focus
+            ),
+            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10), // ✅ Giảm chiều cao
+          ),
+          style: TextStyle(fontSize: 14), // ✅ Giảm font size một chút để phù hợp hơn
           onChanged: (value) => setState(() {
             password = value;
           }),
         ),
+        SizedBox(height: 12),
         TextField(
           obscureText: true,
-          decoration: InputDecoration(labelText: 'Xác nhận mật khẩu', suffixIcon: Icon(Icons.visibility)),
+          decoration: InputDecoration(labelText: 'Xác nhận mật khẩu', labelStyle: TextStyle(color: Colors.grey),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(17),
+              borderSide: BorderSide(color: Colors.grey.shade50, width: 0.5),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(17),
+              borderSide: BorderSide(color: Colors.grey.shade700, width: 1.7), // ✅ Viền xám đậm hơn khi focus
+            ),
+            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10), // ✅ Giảm chiều cao
+          ),
+          style: TextStyle(fontSize: 14), // ✅ Giảm font size một chút để phù hợp hơn
         ),
-        SizedBox(height: 20),
+        SizedBox(height: 12),
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
             onPressed: register,
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
-              padding: EdgeInsets.symmetric(vertical: 15),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              backgroundColor: Color(0xFF0064E0), // ✅ Màu #0064E0
+              padding: EdgeInsets.symmetric(vertical: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
             ),
-            child: Text('Đăng ký', style: TextStyle(color: Colors.white, fontSize: 16)),
+            child: Text('Đăng ký', style: TextStyle(color: Colors.white, fontSize: 15)),
           ),
         ),
       ],
