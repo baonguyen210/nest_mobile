@@ -73,6 +73,7 @@
 
 
 import 'package:flutter/material.dart';
+import 'package:nest_mobile/googleMapFlutter.dart';
 import 'package:nest_mobile/joinfamily.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'homepage.dart';
@@ -84,16 +85,20 @@ class ChooseFamilyScreen extends StatelessWidget {
 
   Future<void> _saveFamilyId(BuildContext context, String familyId) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setString('familyId', familyId);
+    await prefs.setString('FamilyId', familyId); // Đổi thành 'FamilyId' để đồng nhất với `message.dart`
+
+    print("✅ FamilyId đã lưu vào SharedPreferences: $familyId");
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text("Gia đình đã được chọn!"), backgroundColor: Colors.green),
     );
 
     Future.delayed(Duration(seconds: 2), () {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Homepage()));
+      // Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Homepage()));
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => GoogleMapFlutter()));
     });
   }
+
 
 
   @override

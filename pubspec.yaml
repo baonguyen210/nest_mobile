@@ -39,6 +39,11 @@ dependencies:
   dio: ^4.0.0
   shared_preferences: ^2.2.2
   image_picker: ^1.0.7
+  socket_io_client: ^3.0.2
+  google_maps_flutter: ^2.10.1
+  geolocator: ^10.1.0
+  geocoding: ^2.1.0
+  permission_handler: ^11.0.1
 
 dev_dependencies:
   flutter_test:
@@ -71,6 +76,8 @@ flutter:
     - assets/images/Google.png
     - assets/images/family.png
     - assets/images/NEST BG.png
+    - assets/images/user_avatar.png
+
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg

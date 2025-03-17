@@ -24,19 +24,30 @@ android {
         applicationId = "com.example.nest_mobile"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        minSdkVersion 21
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
 
-    buildTypes {
+    signingConfigs {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.debug
+            keyAlias 'your-key-alias'
+            keyPassword 'your-key-password'
+            storeFile file('your-keystore-file.jks') // 🟢 Chỉnh sửa đường dẫn file keystore nếu có
+            storePassword 'your-store-password'
         }
     }
+
+    buildTypes {
+        release {
+            minifyEnabled true  // 🔥 Bật ProGuard để tối ưu code
+            shrinkResources true // 🔥 Bật tối ưu resource
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
+        }
+    }
+
 }
 
 flutter {

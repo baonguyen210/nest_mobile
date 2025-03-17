@@ -276,6 +276,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:nest_mobile/googleMapFlutter.dart';
 import 'package:nest_mobile/homepage.dart';
 import 'package:nest_mobile/joinfamily.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -339,6 +340,7 @@ class _AuthScreenState extends State<AuthScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => WelcomeScreen()),
+
         );
       }
     } catch (e) {

@@ -1153,7 +1153,7 @@ class _HomepageState extends State<Homepage> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.account_circle),
-            label: 'Hồ sơ cap nhats',
+            label: 'Hồ sơ',
           ),
         ],
       ),
