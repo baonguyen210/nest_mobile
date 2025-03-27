@@ -94,8 +94,8 @@ class ChooseFamilyScreen extends StatelessWidget {
     );
 
     Future.delayed(Duration(seconds: 2), () {
-      // Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Homepage()));
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => GoogleMapFlutter()));
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Homepage()));
+      // Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => GoogleMapFlutter()));
     });
   }
 
