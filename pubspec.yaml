@@ -55,6 +55,8 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.13.1
+
 
 
 # For information on the generic Dart part of this file, see the
@@ -77,6 +79,7 @@ flutter:
     - assets/images/family.png
     - assets/images/NEST BG.png
     - assets/images/user_avatar.png
+    - assets/images/QR.jpg
 
   # To add assets to your application, add an assets section, like this:
   # assets:
@@ -108,3 +111,8 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/icon/icon3.png"

@@ -32,17 +32,17 @@ android {
 
     signingConfigs {
         release {
-            keyAlias 'your-key-alias'
-            keyPassword 'your-key-password'
-            storeFile file('your-keystore-file.jks') // 🟢 Chỉnh sửa đường dẫn file keystore nếu có
-            storePassword 'your-store-password'
+            storeFile file('keystore.jks')
+            storePassword '123456'
+            keyAlias 'my-key-alias'
+            keyPassword '123456'
         }
     }
 
     buildTypes {
         release {
-            minifyEnabled true  // 🔥 Bật ProGuard để tối ưu code
-            shrinkResources true // 🔥 Bật tối ưu resource
+            minifyEnabled false  // 🔥 Bật ProGuard để tối ưu code
+            shrinkResources false // 🔥 Bật tối ưu resource
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.release
         }

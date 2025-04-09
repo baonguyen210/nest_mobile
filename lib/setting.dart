@@ -1,6 +1,7 @@
 // import 'package:flutter/material.dart';
 // import 'package:nest_mobile/group_management.dart';
 // import 'package:nest_mobile/login.dart';
+// import 'package:nest_mobile/update_avatar.dart';
 // import 'package:shared_preferences/shared_preferences.dart';
 //
 // class SettingScreen extends StatefulWidget {
@@ -84,14 +85,22 @@
 //             ),
 //             ListTile(
 //               leading: const Icon(Icons.settings, color: Colors.grey),
-//               title: const Text('Cài đặt tài khoản'),
-//               onTap: () {
-//                 Navigator.push(
+//               title: const Text('Cập nhật ảnh đại diện'),
+//               onTap: () async {
+//                 String? newAvatar = await Navigator.push(
 //                   context,
-//                   MaterialPageRoute(builder: (context) => const GroupManagementScreen()),
+//                   MaterialPageRoute(builder: (context) => UpdateAvatarScreen()),
 //                 );
+//
+//                 // ✅ Nếu có avatar mới, cập nhật UI ngay lập tức
+//                 if (newAvatar != null) {
+//                   setState(() {
+//                     _avatar = newAvatar;
+//                   });
+//                 }
 //               },
 //             ),
+//
 //             ListTile(
 //               leading: const Icon(Icons.logout, color: Colors.red),
 //               title: const Text('Đăng xuất', style: TextStyle(color: Colors.red)),
@@ -167,6 +176,7 @@
 
 
 import 'package:flutter/material.dart';
+import 'package:nest_mobile/BuyPackageScreen.dart';
 import 'package:nest_mobile/group_management.dart';
 import 'package:nest_mobile/login.dart';
 import 'package:nest_mobile/update_avatar.dart';
@@ -323,7 +333,10 @@ class _SettingScreenState extends State<SettingScreen> {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         ),
                         onPressed: () {
-                          // Chuyển đến trang thanh toán Premium
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const BuyPackageScreen()),
+                          );
                         },
                         child: const Text(
                           'ĐĂNG KÝ',

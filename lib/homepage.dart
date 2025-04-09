@@ -118,13 +118,24 @@
 //   @override
 //   void initState() {
 //     super.initState();
-//     _fetchPublicPosts();
-//     _fetchFamilyPosts(); // ✅ Đảm bảo luôn tải mã gia đình và bài viết khi mở Trang chủ
-//     _fetchAllUsers(); // ✅ Gọi API lấy danh sách user
-//     _loadUserInfo();
-//     _fetchEventCount();
-//     _fetchFamilyData();
+//     _initializeData(); // Gọi hàm async riêng để dùng `await`
 //   }
+//
+//   Future<void> _initializeData() async {
+//     // Delay nhẹ để chờ các widget build xong (optional)
+//     await Future.delayed(const Duration(milliseconds: 500));
+//
+//     // Gọi các hàm load dữ liệu song song
+//     await Future.wait([
+//       _fetchFamilyData(),
+//       _fetchPublicPosts(),
+//       _fetchFamilyPosts(),
+//       _fetchAllUsers(),
+//       _loadUserInfo(),
+//       _fetchEventCount(),
+//     ]);
+//   }
+//
 //
 //
 //   void _toggleLike(String postId, String userId) async {
@@ -771,8 +782,12 @@
 //                               setState(() {
 //                                 _familyCode = "Đang tải...";
 //                               });
-//                               _fetchPublicPosts(); // ✅ Tải bài viết công khai
-//                               _fetchFamilyPosts(); // ✅ Tải bài viết trong gia đình
+//                               await Future.delayed(Duration(milliseconds: 300));
+//
+//                               await Future.wait([
+//                                 _fetchPublicPosts(),
+//                                 _fetchFamilyPosts(),
+//                               ]);
 //
 //                             },
 //
@@ -862,11 +877,16 @@
 //             spacing: 8,
 //             runSpacing: 8,
 //             children: (post["images"] as List).map((img) {
-//               return GestureDetector(
-//                 child: ClipRRect(
-//                   borderRadius: BorderRadius.circular(10),
-//                   child: Image.network(img, width: 100, height: 100, fit: BoxFit.cover),
-//                 ),
+//               return Builder(
+//                 builder: (BuildContext ctx) { // ✅ Sử dụng Builder để có context
+//                   return GestureDetector(
+//                     onTap: () => _showFullImage(ctx, img), // ✅ Truyền context đúng cách
+//                     child: ClipRRect(
+//                       borderRadius: BorderRadius.circular(10),
+//                       child: Image.network(img, width: 100, height: 100, fit: BoxFit.cover),
+//                     ),
+//                   );
+//                 },
 //               );
 //             }).toList(),
 //           ),
@@ -1740,6 +1760,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String _avatarUrl = "assets/images/user_avatar.jpg";
   String _familyCode = "Đang tải..."; // Mặc định khi chưa có mã
   int _eventCount = 0;
+  String? _packageName;
 
   String formatTime(String createdAt) {
     DateTime postTime = DateTime.parse(createdAt).toLocal();
@@ -1761,13 +1782,25 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchPublicPosts();
-    _fetchFamilyPosts(); // ✅ Đảm bảo luôn tải mã gia đình và bài viết khi mở Trang chủ
-    _fetchAllUsers(); // ✅ Gọi API lấy danh sách user
-    _loadUserInfo();
-    _fetchEventCount();
-    _fetchFamilyData();
+    _initializeData(); // Gọi hàm async riêng để dùng `await`
   }
+
+  Future<void> _initializeData() async {
+    // Delay nhẹ để chờ các widget build xong (optional)
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    // Gọi các hàm load dữ liệu song song
+    await Future.wait([
+      _fetchInstanceInfo(),
+      _fetchFamilyData(),
+      _fetchPublicPosts(),
+      _fetchFamilyPosts(),
+      _fetchAllUsers(),
+      _loadUserInfo(),
+      _fetchEventCount(),
+    ]);
+  }
+
 
 
   void _toggleLike(String postId, String userId) async {
@@ -1818,6 +1851,57 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _fetchInstanceInfo() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? familyId = prefs.getString('familyId');
+      String? token = prefs.getString('token');
+
+      if (token == null) {
+        print("🚨 Lỗi: Không tìm thấy AccessToken trong SharedPreferences!");
+        return;
+      }
+
+      Dio dio = Dio();
+      String url = "https://platform-family.onrender.com/instance";
+
+      Response response = await dio.get(
+        url,
+        options: Options(headers: {
+          'Authorization': 'Bearer $token',
+        }),
+      );
+
+      print("ℹ️ Response from Get Instance API:"); // In toàn bộ response
+      print("  Status Code: ${response.statusCode}");
+      print("  Data: ${response.data}");
+
+      if (response.statusCode == 200 && response.data["ok"] == true && response.data["data"] is List) {
+        List<dynamic> instances = response.data["data"];
+        if (familyId != null) {
+          for (var instance in instances) {
+            if (instance["familyId"] == familyId) {
+              setState(() {
+                _packageName = instance["packageName"];
+              });
+              print("✅ Tìm thấy packageName: $_packageName cho familyId: $familyId");
+              return; // Thêm return để thoát khỏi hàm sau khi tìm thấy
+            }
+          }
+          print("⚠️ Không tìm thấy familyId: $familyId trong dữ liệu instance trả về.");
+        } else {
+          print("⚠️ Không tìm thấy familyId trong SharedPreferences để so sánh với dữ liệu instance.");
+        }
+      } else {
+        print("⚠️ API trả về lỗi khi lấy thông tin instance:");
+        print("  Status Code: ${response.statusCode}"); // In lại status code để chắc chắn
+        print("  Message: ${response.data["message"]}");
+        print("  Data: ${response.data}"); // In lại data để xem cấu trúc khi lỗi
+      }
+    } catch (e) {
+      print("❌ Lỗi kết nối API instance: $e");
+    }
+  }
 
   Future<void> _fetchAllUsers() async {
     try {
@@ -1988,8 +2072,21 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Logo Nest (bên trái)
-          Image.asset('assets/images/logo.png', height: 40),
+          // Logo Nest và Package Name (bên trái, gần nhau hơn)
+          Row(
+            mainAxisSize: MainAxisSize.min, // Để Row chỉ chiếm không gian cần thiết
+            children: [
+              Image.asset('assets/images/logo.png', height: 40),
+              if (_packageName != null && _packageName!.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(left: 10.0),
+                  child: Text(
+                    _packageName!.split(' ').first, // Lấy phần đầu tiên trước dấu cách
+                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue, fontSize: 16),
+                  ),
+                ),
+            ],
+          ),
 
           // Nhóm nút bên phải
           Row(
@@ -2414,8 +2511,12 @@ class _HomeScreenState extends State<HomeScreen> {
                               setState(() {
                                 _familyCode = "Đang tải...";
                               });
-                              _fetchPublicPosts(); // ✅ Tải bài viết công khai
-                              _fetchFamilyPosts(); // ✅ Tải bài viết trong gia đình
+                              await Future.delayed(Duration(milliseconds: 300));
+
+                              await Future.wait([
+                                _fetchPublicPosts(),
+                                _fetchFamilyPosts(),
+                              ]);
 
                             },
 
@@ -2505,11 +2606,16 @@ Widget _buildPost(BuildContext context, Map<String, dynamic> post, String user, 
             spacing: 8,
             runSpacing: 8,
             children: (post["images"] as List).map((img) {
-              return GestureDetector(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: Image.network(img, width: 100, height: 100, fit: BoxFit.cover),
-                ),
+              return Builder(
+                builder: (BuildContext ctx) { // ✅ Sử dụng Builder để có context
+                  return GestureDetector(
+                    onTap: () => _showFullImage(ctx, img), // ✅ Truyền context đúng cách
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Image.network(img, width: 100, height: 100, fit: BoxFit.cover),
+                    ),
+                  );
+                },
               );
             }).toList(),
           ),

@@ -703,6 +703,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     }
   }
 
+
   Future<void> _checkExistingFamily() async {
     if (token == null) {
       print("⚠️ Không có token, yêu cầu đăng nhập lại.");
